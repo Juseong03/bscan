@@ -1,0 +1,18 @@
+torch>=2.0.0
+torchvision
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+
+# RNA Foundation Models
+multimolecule>=0.0.1
+transformers>=4.35.0
+
+# Thermodynamic analysis
+ViennaRNA>=2.6.0
+
+# Optional: Mamba SSM
+mamba-ssm>=1.2.0
+causal-conv1d>=1.2.0

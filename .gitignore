@@ -1,0 +1,40 @@
+# Large data files (host locally or download from Zenodo)
+data/hg19_seq_dict.json
+data/hg38.json
+data/hg38.fasta
+data/seq_dict/
+
+# FM embeddings (pre-extract with extract_fm_embeddings.py)
+fm_embeddings/
+
+# Trained model checkpoints (see README for Zenodo link)
+saved_models/
+saved_models_hnaug/
+saved_models_hnaug_r025/
+saved_models_pairaux_w005/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Experiment logs and intermediate results
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp_model_*.pth
+
+# OS
+.DS_Store
+.env
