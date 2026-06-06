@@ -1,0 +1,34 @@
+======================================================================
+P3: STATISTICAL TESTS — BOOTSTRAP CI
+======================================================================
+
+[1] Internal AUC: BSCAN-FM 4종 vs CircCNN (10 seeds each)
+  CircCNN internal: n=59, mean=0.8880
+  BSCAN-RNA-FM vs CircCNN: Δ=+0.0188  95%CI [+0.0091, +0.0291]  p=0.0001 ***
+  BSCAN-RNAErnie vs CircCNN: Δ=+0.0241  95%CI [+0.0117, +0.0367]  p=0.0000 ***
+  BSCAN-RNAMSM vs CircCNN: Δ=+0.0258  95%CI [+0.0129, +0.0385]  p=0.0001 ***
+  BSCAN-RNABERT vs CircCNN: Δ=+0.0245  95%CI [+0.0129, +0.0361]  p=0.0002 ***
+
+[2] External AUC: BSCAN-FM vs BSCAN-onehot (FM is architecture control)
+  BSCAN-onehot external: n=10, mean=0.5723
+  BSCAN-RNA-FM vs BSCAN-onehot: Δ=+0.2695  95%CI [+0.2545, +0.2852]  p=0.0000 ***
+  BSCAN-RNAErnie vs BSCAN-onehot: Δ=+0.2655  95%CI [+0.2501, +0.2824]  p=0.0000 ***
+  BSCAN-RNAMSM vs BSCAN-onehot: Δ=+0.2720  95%CI [+0.2567, +0.2880]  p=0.0000 ***
+  BSCAN-RNABERT vs BSCAN-onehot: Δ=+0.2735  95%CI [+0.2589, +0.2892]  p=0.0000 ***
+
+[3] External AUC: BSCAN-FM vs CircCNN
+  CircCNN external: n=10, mean=0.7041
+  BSCAN-RNA-FM vs CircCNN: Δ=+0.1377  95%CI [+0.1264, +0.1482]  p=0.0000 ***
+  BSCAN-RNAErnie vs CircCNN: Δ=+0.1337  95%CI [+0.1212, +0.1454]  p=0.0000 ***
+  BSCAN-RNAMSM vs CircCNN: Δ=+0.1402  95%CI [+0.1283, +0.1509]  p=0.0000 ***
+  BSCAN-RNABERT vs CircCNN: Δ=+0.1416  95%CI [+0.1306, +0.1521]  p=0.0000 ***
+
+[4] External AUC: BSCAN-FM raw vs +duplex (paired per seed, α=0.2)
+  BSCAN-RNA-FM +duplex vs raw: Δ=+0.0031  95%CI [+0.0026, +0.0037]  p=0.0000 ***
+  BSCAN-RNAErnie +duplex vs raw: Δ=+0.0034  95%CI [+0.0031, +0.0038]  p=0.0000 ***
+  BSCAN-RNAMSM +duplex vs raw: Δ=+0.0032  95%CI [+0.0027, +0.0037]  p=0.0000 ***
+  BSCAN-RNABERT +duplex vs raw: Δ=+0.0020  95%CI [+0.0013, +0.0029]  p=0.0000 ***
+
+Saved: research_results/statistical_tests.csv
+
+Done.

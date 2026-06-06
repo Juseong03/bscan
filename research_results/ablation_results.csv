@@ -1,0 +1,8 @@
+model,label,n_seeds,int_auc,int_auc_std,int_prc,ext_auc,ext_auc_std,ext_prc,drop_pct
+bscan_unified_fm_fulltr,Full (CNN+Stem+Attn),3,0.8907,0.0051,0.9201,0.8496,0.006,0.7179,4.61
+bscan_unified_fm_cnnonly,FM+CNN,3,0.8911,0.0071,0.9202,0.845,0.007,0.7152,5.17
+bscan_unified_fm_stemonly,FM+Stem,3,0.8402,0.0052,0.8759,0.7248,0.0174,0.6923,13.74
+bscan_unified_fm_attnonly,FM+Attn,3,0.8674,0.0098,0.9038,0.6852,0.0769,0.6427,21.0
+bscan_unified_fm_nocnn,Full −CNN,3,0.8695,0.0118,0.9035,0.7137,0.0296,0.6764,17.92
+bscan_unified_fm_nostem,Full −Stem,3,0.8838,0.0029,0.9166,0.8487,0.0014,0.7238,3.97
+bscan_unified_fm_noattn,Full −Attn,3,0.8838,0.002,0.9165,0.8498,0.0073,0.7177,3.84

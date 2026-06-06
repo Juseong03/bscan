@@ -38,3 +38,24 @@ temp_model_*.pth
 # OS
 .DS_Store
 .env
+
+# === Added for reorg/push (2026-06) ===
+# Symlinks to external storage (recreated per-machine; do not commit)
+external_data
+external_data/
+
+# Large re-downloadable inputs (UCSC RepeatMasker — see analysis/analyze_alu_repeats.py)
+data/rmsk_hg19.txt.gz
+
+# Per-sample raw prediction dumps (keep only *_summary.csv)
+research_results/*_raw.csv
+research_results/predictions_*.csv
+
+# symlink form (not just dir) for checkpoint store
+saved_models
+saved_models_hnaug
+saved_models_hnaug_r025
+saved_models_pairaux_w005
+
+# Agent/editor runtime state
+.claude/

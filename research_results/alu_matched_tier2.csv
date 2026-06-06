@@ -1,0 +1,10 @@
+model,seed,tier2_std,tier2_alu_matched,delta
+bscan,42,0.8097,0.8054,-0.0043
+circcnn,42,0.6904,0.6904,-0.0
+bscan,123,0.6956,0.6977,0.0021
+circcnn,123,0.7677,0.7719,0.0042
+bscan,315,0.6991,0.7026,0.0036
+circcnn,315,0.7061,0.7088,0.0027
+bscan_unified_fm,42,0.5002,0.4998,-0.0004
+bscan_unified_fm,123,0.4474,0.4436,-0.0039
+bscan_unified_fm,315,0.4874,0.493,0.0056

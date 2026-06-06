@@ -1,0 +1,3 @@
+label,n,alu_mean,alu_std,alu_median,pct_has_upper,pct_has_lower,pct_has_pair
+BS,12105,0.0194,0.0785,0.0,4.9,4.4,0.6
+LS,12111,0.0162,0.0729,0.0,3.8,3.5,0.3

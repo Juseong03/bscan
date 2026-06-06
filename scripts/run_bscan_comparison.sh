@@ -12,7 +12,7 @@ echo "=================================================="
 for SEED in "${SEEDS[@]}"; do
     echo ""
     echo ">> Seed $SEED"
-    python run_model_comparison.py \
+    python pipeline/run_model_comparison.py \
         --epochs 100 \
         --earlystop 10 \
         --batch_size 128 \

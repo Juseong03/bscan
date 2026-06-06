@@ -1,0 +1,13 @@
+Loaded 8217 external examples | device=cuda:0
+
+============================================================
+bscan_unified_fm_cnnadapter
+============================================================
+  seed=42  AUC=0.8660  PRC=0.7928  MCC=0.6899
+  seed=123  AUC=0.8606  PRC=0.7891  MCC=0.6760
+  seed=315  AUC=0.8622  PRC=0.7898  MCC=0.6736
+  seed=777  AUC=0.8752  PRC=0.8087  MCC=0.7007
+  seed=1004  AUC=0.8613  PRC=0.7932  MCC=0.6659
+
+  → AUC=0.8651±0.0061  PRC=0.7947  MCC=0.6812
+  Saved: external_data/circatlas/exon_controls/bscan_unified_fm_cnnadapter_external_control_results.csv

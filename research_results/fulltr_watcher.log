@@ -1,0 +1,22 @@
+=== Waiting for 3 fulltr checkpoints ===
+  15:57: fulltr 1/3
+  15:59: fulltr 1/3
+  16:01: fulltr 1/3
+  16:03: fulltr 2/3
+  16:05: fulltr 2/3
+  16:07: fulltr 2/3
+  16:09: fulltr 2/3
+  16:11: fulltr 2/3
+  16:13: fulltr 2/3
+fulltr ready 16:15
+=== Re-running full ablation eval (7 configs) ===
+Full (CNN+Stem+Attn) int=0.8907±0.0051  ext=0.8496  drop=4.6%
+FM+CNN         int=0.8911±0.0071  ext=0.8450  drop=5.2%
+FM+Stem        int=0.8402±0.0052  ext=0.7248  drop=13.7%
+FM+Attn        int=0.8674±0.0098  ext=0.6852  drop=21.0%
+Full −CNN      int=0.8695±0.0118  ext=0.7137  drop=17.9%
+Full −Stem     int=0.8838±0.0029  ext=0.8487  drop=4.0%
+Full −Attn     int=0.8838±0.0020  ext=0.8498  drop=3.8%
+
+Saved: research_results/ablation_results.csv
+=== Done 16:23 ===

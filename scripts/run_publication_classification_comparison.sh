@@ -30,7 +30,7 @@ for SEED in "${SEEDS[@]}"; do
     echo "Seed: $SEED"
     echo "=========================================="
 
-    python run_model_comparison.py \
+    python pipeline/run_model_comparison.py \
         --models ${MODELS_TO_COMPARE[*]} \
         --epochs 100 \
         --earlystop 10 \

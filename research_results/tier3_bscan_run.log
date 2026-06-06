@@ -1,0 +1,12 @@
+Model: bscan, Number of parameters: 3884818
+bscan seed=42: AUC=0.5605, gap=0.0481
+Model: bscan, Number of parameters: 3884818
+bscan seed=123: AUC=0.5209, gap=-0.0352
+Model: bscan, Number of parameters: 3884818
+bscan seed=315: AUC=0.5238, gap=-0.0568
+
+Summary:
+model  auc_mean  auc_std  score_gap_mean
+bscan   0.53509 0.022084       -0.014637
+
+Saved: research_results/hard_negative_pairing_lower_intron_results.csv

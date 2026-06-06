@@ -1,4 +1,4 @@
-# BSCAN: Back-Splice Circuit Attention Network
+# BSCAN: Back-Splice CircRNA Attention Network
 
 A deep learning framework for circRNA back-splicing site (BS) detection and expression prediction. BSCAN integrates frozen RNA foundation model embeddings with cross-attention over paired junction sequences to achieve state-of-the-art performance and generalization.
 
@@ -116,10 +116,10 @@ python extract_sequences.py --genome hg19.fa --coords data/BS_LS_coordinates_fin
 
 ```bash
 # Sanity check — forward pass for all models
-python smoke_models.py
+python pipeline/smoke_models.py
 
 # Train BSCAN-RNA-FM (10 seeds, transcript-grouped split)
-python experiment.py --model_name bscan_unified_fm --encoder_type rnafm \
+python pipeline/experiment.py --model_name bscan_unified_fm --encoder_type rnafm \
     --epochs 100 --seed 42 --device 0 --split_strategy transcript
 
 # Train all FM variants (multi-GPU)
@@ -127,14 +127,14 @@ bash scripts/run_gpu0.sh &  # RNA-FM, RNAErnie on GPU 0
 bash scripts/run_gpu1.sh &  # RNABERT, RNAMSM on GPU 1
 
 # Pre-extract FM embeddings (required for cached FM mode)
-python extract_fm_embeddings.py --enc_type rnafm --device 0
+python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0
 
 # Hard negative augmented training
-python train_hard_negative_augmented.py \
+python pipeline/train_hard_negative_augmented.py \
     --models bscan circcnn --seeds 42 123 315 \
     --eval-negative-modes lower_intron ls_lower_intron
 
-python train_hard_negative_augmented_fm.py \
+python pipeline/train_hard_negative_augmented_fm.py \
     --enc-type rnafm --seeds 42 123 315 --device 0
 ```
 
@@ -152,18 +152,18 @@ bash scripts/run_publication_classification_comparison.sh
 
 ```bash
 # Build exon-length-matched controls from circAtlas v3
-python make_circatlas_exon_controls.py
+python pipeline/make_circatlas_exon_controls.py
 
 # Evaluate all models
-python evaluate_circatlas_all_baselines.py --device 0
+python pipeline/evaluate_circatlas_all_baselines.py --device 0
 ```
 
 ### Table 3 — Hard negative 3-tier analysis
 
 ```bash
 bash scripts/run_hard_negative_pairing.sh
-python train_hard_negative_augmented.py --models bscan circcnn --seeds 42 123 315
-python train_hard_negative_augmented_fm.py --enc-type rnafm --seeds 42 123 315
+python pipeline/train_hard_negative_augmented.py --models bscan circcnn --seeds 42 123 315
+python pipeline/train_hard_negative_augmented_fm.py --enc-type rnafm --seeds 42 123 315
 ```
 
 Pre-computed results are available in `results/`.
@@ -187,7 +187,7 @@ Pre-trained checkpoints available at: **[Zenodo DOI — to be added]**
 
 ```bibtex
 @article{bscan2026,
-  title   = {BSCAN: Back-Splice Circuit Attention Network for circRNA Junction Detection},
+  title   = {BSCAN: Back-Splice CircRNA Attention Network for circRNA Junction Detection},
   author  = {[Authors]},
   journal = {[Journal]},
   year    = {2026},

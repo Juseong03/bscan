@@ -1,0 +1,10 @@
+model,n_seeds,full_auc,hostdisjoint_auc,delta,n_disjoint
+bscan_unified_fm,10,0.8418,0.8182,-0.0236,5305
+bscan_unified_ernie,10,0.8378,0.815,-0.0228,5305
+bscan_unified_msm,10,0.8443,0.8209,-0.0234,5305
+bscan_unified_bert,10,0.8458,0.8227,-0.0231,5305
+bscan,10,0.7204,0.7051,-0.0153,5305
+circcnnsingle,10,0.5392,0.524,-0.0152,5305
+circcnntri,10,0.538,0.5238,-0.0143,5305
+jedi,10,0.4672,0.4552,-0.012,5305
+bscan_unified_onehot,10,0.5723,0.5564,-0.0159,5305

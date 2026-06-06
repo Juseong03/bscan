@@ -36,7 +36,7 @@ for SEED in "${SEEDS[@]}"; do
   TAG="transcript_holdout_bscan_foundation_seed_${SEED}"
   LOG="logs/${TAG}.log"
   echo "[$(date)] Running transcript-holdout BSCAN representation variants, seed=${SEED}, batch_size=${BATCH_SIZE}" | tee "$LOG"
-  python run_model_comparison.py \
+  python pipeline/run_model_comparison.py \
     --models "${MODELS[@]}" \
     --epochs "$EPOCHS" \
     --earlystop "$EARLYSTOP" \
@@ -49,6 +49,6 @@ for SEED in "${SEEDS[@]}"; do
     --out_dir "$OUT_DIR" 2>&1 | tee -a "$LOG"
 done
 
-python summarize_transcript_holdout.py \
+python pipeline/summarize_transcript_holdout.py \
   --pattern "${OUT_DIR}/model_comparison_transcript_holdout_bscan_foundation_seed_*.csv" \
   --out "${OUT_DIR}/transcript_holdout_bscan_foundation_summary.csv"

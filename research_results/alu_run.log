@@ -1,0 +1,32 @@
+Loading junction sequences...
+Parsing RepeatMasker track: data/rmsk_hg19.txt.gz...
+  ALU: 1,123,747  SINE: 1,769,839  chromosomes: 24
+
+Computing ALU coverage for all junctions...
+
+============================================================
+Analysis 1: ALU coverage — BS vs LS intronic flanks (100nt)
+============================================================
+
+BS (n=12105)
+  ALU coverage (mean ± std): 0.0194 ± 0.0785
+  Has ALU in both flanks (%): 0.6%
+  Median ALU coverage: 0.0000
+
+LS (n=12111)
+  ALU coverage (mean ± std): 0.0162 ± 0.0729
+  Has ALU in both flanks (%): 0.3%
+  Median ALU coverage: 0.0000
+
+Mann-Whitney U (BS > LS ALU): U=74515385.5, p=9.05e-07
+
+============================================================
+Analysis 2: ALU presence rates
+============================================================
+BS: has_any_ALU=8.7%  has_pair=0.6%
+LS: has_any_ALU=7.1%  has_pair=0.3%
+
+Saved: research_results/alu_coverage.csv
+Saved: research_results/alu_summary.csv
+
+Done.

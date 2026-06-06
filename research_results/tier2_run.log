@@ -1,0 +1,40 @@
+Model: bscan, Number of parameters: 3884818
+bscan seed=42: AUC=0.8071, gap=0.2825
+Model: circcnn, Number of parameters: 2624130
+circcnn seed=42: AUC=0.6912, gap=0.2002
+Model: circcnndouble, Number of parameters: 8440450
+circcnndouble seed=42: AUC=0.5941, gap=0.0927
+Model: circdc, Number of parameters: 226986
+circdc seed=42: AUC=0.6566, gap=0.1017
+Model: jedi, Number of parameters: 2595462
+jedi seed=42: AUC=0.5400, gap=0.0303
+Model: bscan, Number of parameters: 3884818
+bscan seed=123: AUC=0.6850, gap=0.1438
+Model: circcnn, Number of parameters: 2624130
+circcnn seed=123: AUC=0.7773, gap=0.2635
+Model: circcnndouble, Number of parameters: 8440450
+circcnndouble seed=123: AUC=0.6638, gap=0.1243
+Model: circdc, Number of parameters: 226986
+circdc seed=123: AUC=0.6166, gap=0.0559
+Model: jedi, Number of parameters: 2595462
+jedi seed=123: AUC=0.5500, gap=0.0410
+Model: bscan, Number of parameters: 3884818
+bscan seed=315: AUC=0.6872, gap=0.1081
+Model: circcnn, Number of parameters: 2624130
+circcnn seed=315: AUC=0.6874, gap=0.1484
+Model: circcnndouble, Number of parameters: 8440450
+circcnndouble seed=315: AUC=0.7143, gap=0.1343
+Model: circdc, Number of parameters: 226986
+circdc seed=315: AUC=0.6395, gap=0.0608
+Model: jedi, Number of parameters: 2595462
+jedi seed=315: AUC=0.5576, gap=0.0461
+
+Summary:
+        model  auc_mean  auc_std  score_gap_mean
+        bscan  0.726450 0.069894        0.178126
+      circcnn  0.718639 0.050854        0.204042
+circcnndouble  0.657433 0.060340        0.117099
+       circdc  0.637568 0.020060        0.072812
+         jedi  0.549181 0.008845        0.039151
+
+Saved: research_results/hard_negative_pairing_ls_lower_intron_results.csv

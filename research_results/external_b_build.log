@@ -1,0 +1,19 @@
+Loading internal training junctions...
+  Internal: 24,226 junctions
+Loading hg19 genome...
+  Chromosomes: 24
+Loading circBase positives...
+  Non-overlapping circBase entries: 87,570
+Loading RJunBase negatives...
+  RJunBase LS entries: 630,583
+Building External-B (target: 3000 pairs)...
+  Built: 3000 positives, 3000 negatives (6000 total)
+  Saved: external_data/circbase_b/seq_dict/junction.json (6000 entries)
+  Saved: external_data/circbase_b/coordinates.csv
+
+External-B summary:
+  BS: n=3000, length = 23121 ± 44327
+  LS: n=3000, length = 22713 ± 44367
+  Source: circBase (positives), RJunBase (negatives)
+  Genome: hg19 (independent of circAtlas hg38)
+Done.

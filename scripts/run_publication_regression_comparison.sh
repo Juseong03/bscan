@@ -30,7 +30,7 @@ for SEED in "${SEEDS[@]}"; do
     echo "Seed: $SEED"
     echo "=========================================="
 
-    python experiment_regression.py \
+    python pipeline/experiment_regression.py \
         --model_name bscan_seq_lite_regression \
         --epochs 200 \
         --earlystop 10 \
@@ -42,7 +42,7 @@ for SEED in "${SEEDS[@]}"; do
         --seed $SEED \
         | tee "logs/${TAG}_bscan_seq_lite_regression_seed_${SEED}.log"
 
-    python experiment_regression.py \
+    python pipeline/experiment_regression.py \
         --model_name deepcirccode_regression \
         --epochs 200 \
         --earlystop 10 \
@@ -54,7 +54,7 @@ for SEED in "${SEEDS[@]}"; do
         --seed $SEED \
         | tee "logs/${TAG}_deepcirccode_regression_seed_${SEED}.log"
 
-    python experiment_regression.py \
+    python pipeline/experiment_regression.py \
         --model_name circcnn_regression \
         --epochs 200 \
         --earlystop 10 \
@@ -67,4 +67,4 @@ for SEED in "${SEEDS[@]}"; do
         | tee "logs/${TAG}_circcnn_regression_seed_${SEED}.log"
 done
 
-python summarize_publication_regression.py
+python pipeline/summarize_publication_regression.py

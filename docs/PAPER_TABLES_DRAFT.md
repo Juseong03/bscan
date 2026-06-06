@@ -1,15 +1,13 @@
 # BSCAN 논문 테이블 초안
 
-> 업데이트: 2026-06-02  
+> 업데이트: 2026-06-03 **✅ 모든 실험 완료**
 > Seeds: FM 모델 10종, baseline 10종, hard neg 3종(42/123/315)  
-> † = BSCAN-FM+CNN adapter는 5 seeds, BSCAN-FM+Mamba는 훈련 중  
-> ‡ = Hard neg augmented training 결과 대기 중
 
 ---
 
 ## Table 1. Internal Validation (Standard BS vs LS, Transcript-Grouped Split)
 
-> 내부 검증: transcript 기준으로 그룹 분리한 80/10/10 split. 10 seeds 평균 ± 표준편차.
+> 내부 검증: transcript 기준으로 그룹 분리한 split (실제 ~62/17/20). 10 seeds 평균 ± 표준편차.
 
 | Model | Params | AUC | AUPRC | MCC |
 |-------|-------:|:---:|:-----:|:---:|
@@ -17,7 +15,6 @@
 | **BSCAN-RNAMSM** | 2.0M | 0.9167 ± 0.0023 | 0.9388 | 0.7380 |
 | **BSCAN-RNA-FM** | 2.0M | 0.9167 ± 0.0023 | 0.9392 | 0.7330 |
 | **BSCAN-RNABERT** | 1.9M | 0.9164 ± 0.0020 | 0.9390 | 0.7359 |
-| BSCAN-FM+CNN† | 2.0M | 0.9131 ± 0.0022 | — | — |
 | BSCAN-onehot | 2.0M | 0.9164 ± 0.0024 | 0.9366 | 0.7215 |
 | BSCAN-base | 3.9M | 0.9009 ± 0.0019 | 0.9247 | 0.6853 |
 | CircCNN | 2.6M | 0.8983 ± 0.0039 | 0.9223 | 0.6792 |
@@ -45,8 +42,9 @@ BSCAN-FM은 BSCAN-base(3.9M)보다 적은 파라미터(~2.0M)로 더 높은 AUC.
 | **BSCAN-RNAMSM** | 0.8443 ± 0.0144 | 0.7266 | 0.7125 | 7.9% |
 | **BSCAN-RNA-FM** | 0.8418 ± 0.0143 | 0.7210 | 0.6991 | 8.2% |
 | **BSCAN-RNAErnie** | 0.8378 ± 0.0162 | 0.7207 | 0.6836 | 8.6% |
-| BSCAN-onehot | 0.5723 ± 0.0220 | 0.5202 | 0.0382 | 37.6% |
+| BSCAN-base | 0.7204 ± 0.0210 | 0.6255 | 0.2940 | 20.0% |
 | CircCNN | 0.7041 ± 0.0127 | 0.6151 | 0.2530 | 21.6% |
+| BSCAN-onehot | 0.5723 ± 0.0220 | 0.5202 | 0.0382 | 37.6% |
 | DeepCircCode | 0.5556 ± 0.0101 | 0.5082 | 0.0343 | 36.6% |
 | CircCNN-single | 0.5392 ± 0.0096 | 0.4992 | −0.0118 | 39.7% |
 | CircCNN-tri | 0.5380 ± 0.0091 | 0.4997 | −0.0158 | 39.5% |
@@ -54,8 +52,6 @@ BSCAN-FM은 BSCAN-base(3.9M)보다 적은 파라미터(~2.0M)로 더 높은 AUC.
 | CircDC | 0.5010 ± 0.0072 | 0.4759 | −0.0754 | 41.9% |
 | CircDeep | 0.4940 ± 0.0068 | 0.4927 | −0.0100 | 37.5% |
 | JEDI | 0.4672 ± 0.0049 | 0.4563 | −0.0965 | 45.3% |
-| BSCAN-base | — | — | — | — |
-| BSCAN-FM+CNN† | — | — | — | — |
 
 **핵심**: BSCAN-FM의 Drop%는 ~8%로 baseline 대비 4–5배 낮음.  
 **Control**: BSCAN-onehot (동일 아키텍처, FM 없음)이 37.6% drop → FM embedding이 generalization의 핵심.
@@ -78,15 +74,14 @@ BSCAN-FM은 BSCAN-base(3.9M)보다 적은 파라미터(~2.0M)로 더 높은 AUC.
 | **BSCAN-RNAErnie** | 0.917 | 0.477 ± 0.029† | 0.492 ± 0.006 | **0.533** | −0.015 |
 | **BSCAN-RNAMSM** | 0.917 | 0.450 ± 0.021† | 0.494 ± 0.005 | 0.510 | −0.044 |
 | **BSCAN-RNABERT** | 0.916 | 0.569 ± 0.008 | 0.496 ± 0.002 | 0.502 | +0.073 |
-| BSCAN-FM+CNN† | 0.913 | 0.512 ± 0.036 | 0.496 ± 0.008 | 0.499 | +0.016 |
-| BSCAN-base | 0.901 | — | 0.523 ± 0.006 | — | — |
-| CircCNN | 0.898 | — | 0.508 ± 0.006 | — | — |
+| BSCAN-base | 0.901 | **0.727 ± 0.070** | **0.535 ± 0.022** | — | **+0.192** |
+| CircCNN | 0.898 | 0.719 ± 0.051 | 0.508 ± 0.005 | — | +0.211 |
 | CircCNN-single | 0.894 | 0.671 ± 0.052 | 0.536 ± 0.015 | — | +0.135 |
-| CircCNN-tri | 0.889 | **0.715 ± 0.044** | **0.558 ± 0.020** | — | **+0.158** |
-| CircCNN-double | 0.888 | — | 0.513 ± 0.003 | — | — |
+| CircCNN-tri | 0.889 | **0.715 ± 0.044** | **0.558 ± 0.020** | — | **+0.157** |
+| CircCNN-double | 0.888 | 0.657 ± 0.060 | 0.513 ± 0.003 | — | +0.144 |
 | DeepCircCode | 0.877 | 0.663 ± 0.005 | 0.518 ± 0.003 | — | +0.145 |
-| CircDC | 0.862 | — | 0.514 ± 0.002 | — | — |
-| JEDI | 0.854 | — | 0.503 ± 0.003 | — | — |
+| CircDC | 0.862 | 0.638 ± 0.020 | 0.514 ± 0.002 | — | +0.124 |
+| JEDI | 0.854 | 0.549 ± 0.009 | 0.503 ± 0.003 | — | +0.046 |
 | **BSCAN-hnaug** | 0.872 ± 0.004 | **0.901 ± 0.005** | **0.843 ± 0.007** | — | +0.158 |
 | **CircCNN-hnaug** | 0.872 ± 0.010 | **0.897 ± 0.005** | **0.836 ± 0.009** | — | +0.135 |
 | **BSCAN-FM-hnaug** | 0.909 ± 0.002 | 0.533 ± 0.033 | 0.509 ± 0.008 | — | +0.025 |
@@ -100,7 +95,7 @@ Early stopping: 0.5 × valid_AUC + 0.5 × valid_HN_AUC 동시 최적화. Seeds 4
 - FM 모델 (gap ≤ 0): Intron 정보 무시, 완전 exon 분류기
 - Standard 학습 모델은 개별 BS junction intron 구분 불가 (Tier3 ≤ 0.558)
 - **hnaug 모델 (one-hot)**: Tier3 0.84로 비약적 개선 — intron specificity 신호는 존재하나 표준 학습이 이를 incentivize하지 않음을 증명
-- **BSCAN-FM-hnaug**: Tier3 0.509 — hnaug 학습에도 불구하고 FM 임베딩이 exon 편향을 극복하지 못함. FM이 학습 신호 자체를 억제하는 근본적 편향임을 확인
+- **BSCAN-FM-hnaug**: Tier3 0.509 — hnaug 학습에도 intron-discriminative signal이 회복되지 않음. Frozen FM embedding 설정의 한계로 해석되나, 구체적 메커니즘은 추가 probing 필요
 
 ---
 
@@ -157,10 +152,16 @@ MCC (threshold=0.5)는 변화 없음 (logit rescaling이 ranking에만 영향).
 
 ---
 
-## 대기 중 수치 (‡)
+## ✅ 완료된 실험 (2026-06-03)
 
-| 항목 | 예상 추가 시점 |
-|------|--------------|
-| BSCAN-FM+Mamba 내부 AUC (5 seeds) | 수시간 내 |
-| BSCAN-base 외부 AUC | 별도 실험 필요 |
-| hnaug (BSCAN, CircCNN) Tier2/3 AUC | 훈련 완료 후 |
+| 항목 | 결과 |
+|------|------|
+| BSCAN-base 외부 AUC (10 seeds) | ✅ 0.7204 ± 0.0210 |
+| BSCAN-base Tier2 (3 seeds) | ✅ 0.7265 ± 0.0699 |
+| CircCNN Tier2 (3 seeds) | ✅ 0.7186 ± 0.0509 |
+| CircCNN-double Tier2 (3 seeds) | ✅ 0.6574 ± 0.0603 |
+| CircDC Tier2 (3 seeds) | ✅ 0.6376 ± 0.0201 |
+| JEDI Tier2 (3 seeds) | ✅ 0.5492 ± 0.0088 |
+| BSCAN-base Tier3 수정 (3 seeds) | ✅ 0.5351 ± 0.0221 (기존 0.523은 bscan_seq_lite 오기재) |
+
+> Adapter 실험 (BSCAN-FM+CNN, BSCAN-FM+Mamba)은 split 조건 불일치(sample vs. transcript-grouped)로 본문에서 제외. 후속 연구 항목으로 보류.

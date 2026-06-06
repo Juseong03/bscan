@@ -9,7 +9,7 @@ MAX_SAMPLES="${MAX_SAMPLES:-}"
 NEGATIVE_MODE="${NEGATIVE_MODE:-lower_intron}"
 
 cmd=(
-  python evaluate_hard_negative_pairing.py
+  python pipeline/evaluate_hard_negative_pairing.py
   --device "$DEVICE"
   --batch-size "$BATCH_SIZE"
   --negative-mode "$NEGATIVE_MODE"

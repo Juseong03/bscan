@@ -1,0 +1,126 @@
+
+============================================================
+Seed 42
+============================================================
+
+[BSCAN-FM]
+  full: AUC=0.9770
+  exon_masked: AUC=0.9515
+  intron_masked: AUC=0.9014
+  upper_intron_masked: AUC=0.9689
+  lower_intron_masked: AUC=0.9168
+
+[BSCAN-onehot]
+  full: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  exon_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  upper_intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  lower_intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+
+[BSCAN-base]
+Model: bscan, Number of parameters: 3884818
+  full: AUC=0.9788
+  exon_masked: AUC=0.9431
+  intron_masked: AUC=0.9198
+  upper_intron_masked: AUC=0.9534
+  lower_intron_masked: AUC=0.9588
+
+[CircCNN]
+Model: circcnn, Number of parameters: 2624130
+  full: AUC=0.9005
+  exon_masked: AUC=0.8734
+  intron_masked: AUC=0.8243
+  upper_intron_masked: AUC=0.8614
+  lower_intron_masked: AUC=0.8657
+
+============================================================
+Seed 123
+============================================================
+
+[BSCAN-FM]
+  full: AUC=0.9728
+  exon_masked: AUC=0.9569
+  intron_masked: AUC=0.8848
+  upper_intron_masked: AUC=0.9637
+  lower_intron_masked: AUC=0.8872
+
+[BSCAN-onehot]
+  full: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  exon_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  upper_intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  lower_intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+
+[BSCAN-base]
+Model: bscan, Number of parameters: 3884818
+  full: AUC=0.9069
+  exon_masked: AUC=0.8812
+  intron_masked: AUC=0.8317
+  upper_intron_masked: AUC=0.8779
+  lower_intron_masked: AUC=0.8645
+
+[CircCNN]
+Model: circcnn, Number of parameters: 2624130
+  full: AUC=0.9445
+  exon_masked: AUC=0.9136
+  intron_masked: AUC=0.8647
+  upper_intron_masked: AUC=0.9130
+  lower_intron_masked: AUC=0.9076
+
+============================================================
+Seed 315
+============================================================
+
+[BSCAN-FM]
+  full: AUC=0.9803
+  exon_masked: AUC=0.9602
+  intron_masked: AUC=0.9046
+  upper_intron_masked: AUC=0.9715
+  lower_intron_masked: AUC=0.9167
+
+[BSCAN-onehot]
+  full: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  exon_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  upper_intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+  lower_intron_masked: ERROR Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.FloatTensor instead (while checking arguments for embedding)
+
+[BSCAN-base]
+Model: bscan, Number of parameters: 3884818
+  full: AUC=0.9402
+  exon_masked: AUC=0.8995
+  intron_masked: AUC=0.8520
+  upper_intron_masked: AUC=0.9085
+  lower_intron_masked: AUC=0.9004
+
+[CircCNN]
+Model: circcnn, Number of parameters: 2624130
+  full: AUC=0.9328
+  exon_masked: AUC=0.8783
+  intron_masked: AUC=0.8379
+  upper_intron_masked: AUC=0.8882
+  lower_intron_masked: AUC=0.8924
+
+=================================================================
+Model                     Condition                    AUC (mean±std)
+=================================================================
+bscan_unified_fm          full                   0.9767 ± 0.0038 ← FULL
+bscan_unified_fm          exon_masked            0.9562 ± 0.0044
+bscan_unified_fm          intron_masked          0.8970 ± 0.0106
+bscan_unified_fm          upper_intron_masked    0.9680 ± 0.0040
+bscan_unified_fm          lower_intron_masked    0.9069 ± 0.0170
+
+
+bscan_base                full                   0.9420 ± 0.0360 ← FULL
+bscan_base                exon_masked            0.9079 ± 0.0318
+bscan_base                intron_masked          0.8679 ± 0.0461
+bscan_base                upper_intron_masked    0.9133 ± 0.0380
+bscan_base                lower_intron_masked    0.9079 ± 0.0476
+
+circcnn                   full                   0.9260 ± 0.0228 ← FULL
+circcnn                   exon_masked            0.8884 ± 0.0219
+circcnn                   intron_masked          0.8423 ± 0.0205
+circcnn                   upper_intron_masked    0.8875 ± 0.0258
+circcnn                   lower_intron_masked    0.8886 ± 0.0212
+
+Saved: research_results/masking_analysis.csv

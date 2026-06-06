@@ -1,0 +1,13 @@
+Loaded 8217 external examples | device=cuda:0
+
+============================================================
+bscan_unified_fm_mambaadapter
+============================================================
+  seed=42  AUC=0.8596  PRC=0.7916  MCC=0.6573
+  seed=123  AUC=0.8541  PRC=0.7825  MCC=0.6482
+  seed=315  AUC=0.8713  PRC=0.7933  MCC=0.7085
+  seed=777  AUC=0.8697  PRC=0.8022  MCC=0.6915
+  seed=1004  AUC=0.7660  PRC=0.6775  MCC=0.4068
+
+  → AUC=0.8441±0.0443  PRC=0.7694  MCC=0.6225
+  Saved: external_data/circatlas/exon_controls/bscan_unified_fm_mambaadapter_external_control_results.csv
