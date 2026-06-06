@@ -2,7 +2,7 @@
 """Update paper_table_master.csv with BSCAN-FM+Mamba results after training completes."""
 from __future__ import annotations
 import sys as _sys, os as _os  # path shim (core/ + pipeline/ layout)
-_ROOT = "/workspace/volume/bscan"
+_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 for _p in (_ROOT, _ROOT + "/core", _ROOT + "/pipeline"):
     if _p not in _sys.path: _sys.path.insert(0, _p)
 
