@@ -14,19 +14,25 @@ circRNA biogenesis depends on back-splice junctions (BSJ), where a downstream 5'
 
 ### Key findings
 
+**Cross-dataset generalization** (internal vs. circAtlas external):
+
 | Model | Internal AUC | External AUC | Drop |
 |-------|:---:|:---:|:---:|
-| **BSCAN-RNA-FM** | 0.917 | 0.842 | **8%** |
-| BSCAN-base (CNN only) | 0.901 | 0.720 | 20% |
+| **BSCAN-RNA-FM / RNABERT / RNAMSM / RNAErnie** | 0.916–0.917 | 0.838–0.846 | **~8%** |
+| BSCAN-base (3-branch, no FM) | 0.901 | 0.720 | 20% |
 | CircCNN | 0.898 | 0.704 | 22% |
-| CircCNN-single/tri | 0.889–0.894 | 0.538–0.539 | ~39% |
+| CircCNN-single/tri, CircDC, JEDI | 0.85–0.89 | 0.47–0.54 | 39–45% |
+| **BSCAN-onehot** (same architecture, no FM) | 0.916 | 0.572 | 38% |
 
-The ~8% external drop for BSCAN-FM vs. 39–45% for CNN-only baselines demonstrates that frozen RNA foundation model embeddings provide representations that generalize across genomic contexts.
+The ~8% external drop for BSCAN-FM vs. 39–45% for CNN-only baselines shows that frozen RNA FM embeddings generalize across genomic contexts. The architecture-matched **BSCAN-onehot control drops 38%**, isolating the FM representation — not the architecture — as the source of generalization. Leakage is ruled out at two levels: sequence-disjoint (Δ ≤ 0.001) and **host-locus-disjoint** via hg19→hg38 liftOver (FM retains ~0.82 on loci absent from training).
 
-**Hard negative analysis** (3-tier probe) reveals:
-- Standard training: all models near-chance (AUC ≈ 0.50) at intron-specific discrimination
-- Hard negative augmented (one-hot): Tier3 AUC 0.84 — intron pairing signal IS learnable
-- Hard negative augmented (FM): Tier3 AUC 0.51 — FM embeddings suppress intron signals structurally
+**Branch ablation**: the local **CNN branch drives generalization** (CNN-only external AUC 0.845 ≈ full 0.850; removing CNN → 0.714). Stem and cross-attention branches are largely redundant once CNN is present.
+
+**Hard-negative 3-tier probe**:
+- Standard training: all models near-chance at Tier 3 (individual-intron discrimination); FM models are exon-dominant (Tier 2 < 0.5).
+- Hard-negative augmented (one-hot): Tier 3 AUC 0.84 — **intron-pairing signal is learnable**.
+- Hard-negative augmented (FM): Tier 3 AUC 0.51 — not recoverable from frozen FM embeddings.
+- ALU enrichment is real (BS > LS, p < 10⁻⁷) but **ALU-density-matched Tier 2 is unchanged** — ALU is not the primary Tier-2 driver.
 
 ---
 
@@ -34,40 +40,48 @@ The ~8% external drop for BSCAN-FM vs. 39–45% for CNN-only baselines demonstra
 
 ```
 bscan/
-├── data/
-│   ├── BS_LS_coordinates_final.csv   # circRNA/LS junction coordinates (hg19)
-│   ├── hg19_seq_dict.json            # pre-extracted sequences (see Data section)
-│   ├── hg38_exon.bed                 # exon annotation for external controls
-│   └── human_bed_v3.0/              # circAtlas v3 circRNA database
-├── models/
-│   ├── bscan_unified.py             # BSCANUnified (main model, supports all FM types)
-│   ├── bscan_seq.py / _lite.py      # shared token encoder variants
-│   ├── bscan_v2.py                  # CircCNNATT + stem branch
-│   ├── bscan_mamba_xattn.py         # Mamba SSM + cross-attention
-│   ├── bscan_region_interact.py     # region-token compression
-│   ├── classifier.py                # shared MLP head
-│   ├── transformer.py               # multi-head attention
-│   ├── mamba.py / mamba2.py         # Mamba state-space model
-│   ├── circCNN.py / circCNNSingle.py / circCNNtri.py / circCNNDouble.py
-│   ├── deepCircCode.py, circDeep.py, circNet.py, jedi.py, circDC.py
-│   └── *_regression.py              # regression variants
-├── dataloader.py                    # DataSetPrep, circData_* Dataset classes
-├── dataloader_regression.py
-├── trainer.py                       # Trainer with early stopping, model registry
-├── trainer_regression.py
-├── utils.py
-├── experiment.py                    # main classification training entry point
-├── experiment_regression.py
-├── evaluate_hard_negative_pairing.py
-├── train_hard_negative_augmented.py # hnaug training for one-hot models
-├── train_hard_negative_augmented_fm.py  # hnaug training for FM models
-├── extract_fm_embeddings.py         # pre-extract FM embeddings to disk
-├── make_circatlas_exon_controls.py  # build external validation set
-├── evaluate_circatlas_all_baselines.py
-├── smoke_models.py                  # quick forward-pass sanity check
-├── scripts/                         # shell scripts for full experiment sweeps
-└── results/                         # pre-computed paper result CSVs
+├── core/                 # importable library (run scripts import from here)
+│   ├── dataloader.py             # DataSetPrep, circData_* Dataset classes
+│   ├── trainer.py                # Trainer: model registry, early stopping, metrics
+│   ├── utils.py                  # seeding, device, optimizers
+│   ├── RCSFinder.py, CalPPM.py   # reverse-complement match helpers (RCM models)
+│   └── *_regression.py           # regression variants
+├── models/               # model definitions
+│   ├── bscan_unified.py          # BSCANUnified (main model, all FM types + branch flags)
+│   ├── circCNN*.py, deepCircCode.py, circDeep.py, jedi.py, circDC.py, ...  # baselines
+│   ├── classifier.py, transformer.py, mamba.py / mamba2.py
+│   └── *_regression.py
+├── pipeline/             # runnable entry-point scripts (invoke from repo root)
+│   ├── experiment.py             # main classification training entry point
+│   ├── run_model_comparison.py   # multi-model sweep wrapper around experiment.py
+│   ├── train_hard_negative_augmented[_fm].py   # hnaug training
+│   ├── evaluate_hard_negative_pairing.py       # 3-tier hard-negative probe
+│   ├── evaluate_circatlas_all_baselines.py     # external (circAtlas) evaluation
+│   ├── extract_fm_embeddings.py / extract_external_fm_embeddings.py
+│   ├── make_circatlas_exon_controls.py         # build external validation set
+│   ├── smoke_models.py           # quick forward-pass sanity check
+│   └── *_regression.py, summarize_*.py, generate_rcm_scores_subset.py
+├── analysis/             # paper-supplement analysis & figures
+│   ├── evaluate_ablation.py      # branch ablation (internal + external)
+│   ├── analyze_statistics.py     # bootstrap CIs
+│   ├── analyze_masking.py        # exon/intron masking
+│   ├── analyze_alu_repeats.py / analyze_alu_multiscale.py / analyze_alu_matched_tier2.py
+│   ├── analyze_duplex_alpha.py   # duplex α sensitivity
+│   ├── analyze_external_b_disjoint.py / make_external_b_hostgene.py  # leakage controls
+│   └── make_figures.py           # generate Fig 1–5
+├── scripts/              # shell sweep runners (call pipeline/*.py)
+├── data/                 # BS_LS_coordinates_final.csv, hg38_exon.bed, human_bed_v3.0/
+│                         #   (large genome/seq files are gitignored — see Data section)
+├── docs/                 # paper drafts, figure captions, setup & status notes
+├── figures/              # Fig 1–5 (PNG + PDF)
+├── results/ research_results/   # paper tables + analysis result CSVs
+└── (gitignored, transfer separately) fm_embeddings/, saved_models/, external_data/
 ```
+
+> **Path handling.** Scripts in `pipeline/` and `analysis/` auto-detect the repo root from
+> `__file__`, so the repo works at any clone location. **Always run from the repo root**
+> (e.g. `python pipeline/experiment.py …`) since data paths are relative.
+> For deploying on a new machine see **[`docs/SETUP_NEW_SERVER.md`](docs/SETUP_NEW_SERVER.md)**.
 
 ---
 
@@ -89,26 +103,28 @@ pip install mamba-ssm causal-conv1d
 
 ## Data
 
-### Required files
+The repository ships only small input files; large data is **gitignored** and must be
+transferred or regenerated per machine (see [`docs/SETUP_NEW_SERVER.md`](docs/SETUP_NEW_SERVER.md)).
+
+### In the repository
 
 | File | Size | Description |
 |------|------|-------------|
-| `data/BS_LS_coordinates_final.csv` | 1.2 MB | Included in repo |
-| `data/hg19_seq_dict.json` | 2.9 GB | hg19 pre-extracted sequences |
-| `data/hg38.json` | 3.1 GB | hg38 pre-extracted sequences |
-| `data/seq_dict/` | 5.0 GB | Per-chromosome sequence dictionaries |
+| `data/BS_LS_coordinates_final.csv` | 1.2 MB | circRNA/LS junction coordinates (hg19) |
+| `data/hg38_exon.bed` | 15 MB | exon annotation for circAtlas external controls |
+| `data/human_bed_v3.0/` | 30 MB | circAtlas v3 circRNA database |
 
-> Large files available at: **[Zenodo DOI — to be added]**
+### Transfer / regenerate separately (gitignored)
 
-### Genome reference
+| Path | Size | How to obtain |
+|------|-----:|---------------|
+| `data/hg19_seq_dict.json` | 2.9 GB | hg19 genome dict — **required for all experiments**; transfer from source machine or Zenodo |
+| `fm_embeddings/` | 64 GB | pre-extracted FM hidden states; or regenerate with `pipeline/extract_fm_embeddings.py` |
+| `external_data/circatlas/exon_controls/` | 22 GB | external validation set; or rebuild with `pipeline/make_circatlas_exon_controls.py` + `extract_external_fm_embeddings.py` |
+| `saved_models/` | 4.6 GB | trained checkpoints; auto-created when training |
+| `data/rmsk_hg19.txt.gz` | 141 MB | UCSC RepeatMasker (ALU analysis only): `wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz -O data/rmsk_hg19.txt.gz` |
 
-hg19 FASTA is required to build `hg19_seq_dict.json` from scratch:
-
-```bash
-# Download hg19 and extract junction sequences
-wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
-python extract_sequences.py --genome hg19.fa --coords data/BS_LS_coordinates_final.csv
-```
+> Large files / checkpoints to be released at: **[Zenodo DOI — to be added]**
 
 ---
 
@@ -166,7 +182,29 @@ python pipeline/train_hard_negative_augmented.py --models bscan circcnn --seeds 
 python pipeline/train_hard_negative_augmented_fm.py --enc-type rnafm --seeds 42 123 315
 ```
 
-Pre-computed results are available in `results/`.
+### Branch ablation & supplementary analyses (Figures 2–5)
+
+```bash
+# Branch ablation (train 6 variants + full reference, then evaluate)
+python pipeline/experiment.py --model_name bscan_unified_fm_cnnonly  --split_strategy transcript --device 0 --seed 42
+#   ... (also: stemonly, attnonly, nocnn, nostem, noattn, fulltr) ×3 seeds
+python analysis/evaluate_ablation.py            # → results/ablation_summary.csv
+
+# Statistical tests, masking, ALU, duplex, leakage controls
+python analysis/analyze_statistics.py           # bootstrap CIs
+python analysis/analyze_masking.py              # exon/intron masking
+python analysis/analyze_alu_repeats.py          # ALU/SINE (needs data/rmsk_hg19.txt.gz)
+python analysis/analyze_alu_multiscale.py       # 100/250/500-nt windows
+python analysis/analyze_alu_matched_tier2.py    # ALU-density-matched Tier 2
+python analysis/analyze_duplex_alpha.py         # duplex α sensitivity
+python analysis/analyze_external_b_disjoint.py  # sequence-disjoint leakage control
+python analysis/make_external_b_hostgene.py     # host-locus-disjoint (needs pyliftover)
+
+# Regenerate all paper figures
+python analysis/make_figures.py                 # → figures/Fig1-5.{png,pdf}
+```
+
+Pre-computed result CSVs are in `results/` and `research_results/`; figures in `figures/`.
 
 ---
 
