@@ -20,25 +20,40 @@ git이 주는 것 (수정→push→pull로 자동 동기화):
 
 ---
 
-## 2. 직접 전송해야 하는 파일 (git 제외, 용량순)
+## 2. 직접 전송해야 하는 파일 (git 제외)
 
-| 경로 | 크기 | 필수도 | 대안 |
-|------|-----:|--------|------|
-| `fm_embeddings/` | 64G | 학습/평가 필수 | `pipeline/extract_fm_embeddings.py`로 재생성 (GPU 시간 소요) |
-| `external_data/circatlas/exon_controls/` | 22G | 외부검증 필수 | `make_circatlas_exon_controls.py` + `extract_external_fm_embeddings.py`로 재생성 |
-| `saved_models/` | 4.6G | 기존 체크포인트 재사용 시 | 재학습하면 자동 생성됨 (전송 불필요) |
-| `data/hg19_seq_dict.json` | 2.9G | **모든 실험 필수** (게놈) | 없음 — 반드시 전송 |
-| `data/rmsk_hg19.txt.gz` | 141M | ALU 분석만 | UCSC에서 재다운로드 (아래) |
+**실험 종류에 따라 필요한 것이 다릅니다.** 학습의 실제 입력은 전처리된 junction
+파일 `data/seq_dict/100/` 이며, 이것만 있으면 게놈(2.9GB)은 불필요합니다.
 
-### 전송 예시 (rsync)
+| 경로 | 크기 | 언제 필요한가 |
+|------|-----:|---------------|
+| `data/seq_dict/100/` | 709M | **모든 학습 필수** (junction.json 698M + flanking_100.json 11M) |
+| `fm_embeddings/<enc>/` | rnafm 18G / rnabert 3.5G / rnaernie 22G / rnamsm 22G | **FM 모델만** (`bscan_unified_*`) |
+| `external_data/circatlas/exon_controls/` | 22G | 외부 검증만 |
+| `saved_models/` | 4.6G | 기존 체크포인트 재사용 시 (재학습하면 자동 생성) |
+| `data/hg19_seq_dict.json` | 2.9G | seq_dict / fm_embeddings를 **재생성**할 때만 (직접 전송 시 불필요) |
+| `data/rmsk_hg19.txt.gz` | 141M | ALU 분석만 (UCSC 재다운로드 가능, 아래) |
+
+### 시나리오별 최소 전송
+
 ```bash
-# 이 서버 → 새 서버 (최소 구성: 게놈 + 임베딩)
-rsync -av data/hg19_seq_dict.json   NEWSERVER:~/bscan/data/
-rsync -av fm_embeddings/            NEWSERVER:~/bscan/fm_embeddings/
-# 외부검증/기존 체크포인트도 쓰려면
+# A) one-hot/CNN 모델만 (bscan, circcnn, BSCAN-base, CircCNN-*) — 709MB면 끝
+rsync -av data/seq_dict/100/   NEWSERVER:~/bscan/data/seq_dict/100/
+
+# B) FM 모델 (bscan_unified_fm 등) — seq_dict + 해당 encoder 임베딩
+rsync -av data/seq_dict/100/        NEWSERVER:~/bscan/data/seq_dict/100/
+rsync -av fm_embeddings/rnafm/      NEWSERVER:~/bscan/fm_embeddings/rnafm/   # 필요한 enc만
+
+# C) 외부 검증까지
 rsync -av external_data/            NEWSERVER:~/bscan/external_data/
+
+# D) 기존 체크포인트 재사용
 rsync -av saved_models/             NEWSERVER:~/bscan/saved_models/
 ```
+
+> 임베딩을 전송하지 않고 **재생성**하려면 게놈만 옮긴 뒤:
+> `rsync -av data/hg19_seq_dict.json NEWSERVER:~/bscan/data/` →
+> `python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0` (GPU 시간 소요)
 
 ### rmsk 재다운로드 (ALU 분석 시에만)
 ```bash
