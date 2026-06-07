@@ -34,18 +34,28 @@ def extract_and_cache_embeddings(model_name, device_id=0):
         raise ValueError(f"Unknown model: {model_name}")
 
     model.eval()
-    
-    # Load all sequences
+
+    # Load all sequences.
+    # Prefer the pre-built junction dict (data/seq_dict/100/, ~709MB); fall back to
+    # rebuilding from the full hg19 genome (data/hg19_seq_dict.json, ~2.9GB) only if absent.
     data = DataSetPrep(
         coord_path='./data/BS_LS_coordinates_final.csv',
         seq_dict_path='./data/hg19_seq_dict.json',
         junction_bps=100
     )
-    junctions, _ = data.get_junction_intron_seq()
+    try:
+        junctions, _ = data.load_junction_flanking_seq()
+        print("Loaded junctions from data/seq_dict/ (no genome needed)")
+    except Exception:
+        print("seq_dict not found — rebuilding from hg19 genome ...")
+        junctions, _ = data.get_junction_intron_seq()
     keys = list(junctions.keys())
-    
-    print(f"📦 Extracting embeddings for {len(keys)} sequences...")
-    
+
+    # Resume: skip keys whose .pt already exists (safe to re-run after interruption)
+    pending = [k for k in keys if not os.path.exists(os.path.join(cache_dir, f"{k.replace('|','_')}.pt"))]
+    print(f"📦 {len(keys)} total, {len(pending)} pending → extracting embeddings...")
+    keys = pending
+
     batch_size = 64 # Balanced for speed and memory
     for i in tqdm(range(0, len(keys), batch_size)):
         batch_keys = keys[i:i+batch_size]
@@ -82,9 +92,12 @@ def extract_and_cache_embeddings(model_name, device_id=0):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, required=True)
+    parser = argparse.ArgumentParser(description="Pre-extract & cache FM embeddings to fm_embeddings/<enc>/")
+    # accept both --enc_type (docs) and --model (legacy) as aliases
+    parser.add_argument('--enc_type', '--model', dest='enc_type', type=str, required=True,
+                        choices=['rnafm', 'rnabert', 'rnaernie', 'rnamsm'],
+                        help="RNA foundation model encoder to extract")
     parser.add_argument('--device', type=int, default=0)
     args = parser.parse_args()
-    
-    extract_and_cache_embeddings(args.model, args.device)
+
+    extract_and_cache_embeddings(args.enc_type, args.device)

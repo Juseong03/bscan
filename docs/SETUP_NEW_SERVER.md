@@ -40,9 +40,10 @@ git이 주는 것 (수정→push→pull로 자동 동기화):
 # A) one-hot/CNN 모델만 (bscan, circcnn, BSCAN-base, CircCNN-*) — 709MB면 끝
 rsync -av data/seq_dict/100/   NEWSERVER:~/bscan/data/seq_dict/100/
 
-# B) FM 모델 (bscan_unified_fm 등) — seq_dict + 해당 encoder 임베딩
-rsync -av data/seq_dict/100/        NEWSERVER:~/bscan/data/seq_dict/100/
-rsync -av fm_embeddings/rnafm/      NEWSERVER:~/bscan/fm_embeddings/rnafm/   # 필요한 enc만
+# B) FM 모델 (bscan_unified_fm 등) — seq_dict 전송 후 임베딩은 서버에서 생성 (권장)
+rsync -av data/seq_dict/100/        NEWSERVER:~/bscan/data/seq_dict/100/   # 709MB
+#   (새 서버에서) python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0
+#   또는 임베딩을 직접 전송하려면:  rsync -av fm_embeddings/rnafm/  NEWSERVER:~/bscan/fm_embeddings/rnafm/
 
 # C) 외부 검증까지
 rsync -av external_data/            NEWSERVER:~/bscan/external_data/
@@ -51,9 +52,15 @@ rsync -av external_data/            NEWSERVER:~/bscan/external_data/
 rsync -av saved_models/             NEWSERVER:~/bscan/saved_models/
 ```
 
-> 임베딩을 전송하지 않고 **재생성**하려면 게놈만 옮긴 뒤:
-> `rsync -av data/hg19_seq_dict.json NEWSERVER:~/bscan/data/` →
-> `python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0` (GPU 시간 소요)
+> **임베딩을 전송하지 않고 서버에서 생성** (권장 — 64GB 전송 회피):
+> seq_dict(709MB)만 있으면 게놈 없이 생성됩니다.
+> ```bash
+> rsync -av data/seq_dict/100/ NEWSERVER:~/bscan/data/seq_dict/100/   # 709MB (게놈 대신)
+> python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0
+> #   필요한 encoder만: rnafm / rnabert / rnaernie / rnamsm
+> ```
+> - seq_dict가 없으면 자동으로 게놈(hg19_seq_dict.json)에서 재구성하므로 게놈만 옮겨도 됨
+> - 중단 후 재실행하면 이미 만든 `.pt`는 건너뜀 (resume 지원)
 
 ### rmsk 재다운로드 (ALU 분석 시에만)
 ```bash
