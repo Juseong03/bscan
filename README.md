@@ -143,7 +143,10 @@ bash scripts/run_gpu0.sh &  # RNA-FM, RNAErnie on GPU 0
 bash scripts/run_gpu1.sh &  # RNABERT, RNAMSM on GPU 1
 
 # Pre-extract FM embeddings (required for cached FM mode)
-python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0
+python pipeline/extract_fm_embeddings.py --enc_type rnafm --device 0   # single encoder
+bash scripts/extract_all_fm_embeddings.sh 0 "rnafm rnabert rnaernie rnamsm"   # all 4 (internal)
+bash scripts/extract_all_fm_embeddings.sh 0 "rnafm" both   # internal + circAtlas external
+#   loads from data/seq_dict/100/ (no genome needed); resumable; skips cached .pt
 
 # Hard negative augmented training
 python pipeline/train_hard_negative_augmented.py \
