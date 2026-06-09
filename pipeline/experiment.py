@@ -6,7 +6,7 @@ for _p in (_ROOT, _ROOT + "/core", _ROOT + "/pipeline"):
 import argparse
 from utils import seed_everything, get_device
 from trainer import Trainer
-from dataloader import DataSetPrep, circData_single, circData_double, circData_rcm, circData_triple, circData_cached_fm, circData_triple_oh
+from dataloader import DataSetPrep, circData_single, circData_double, circData_rcm, circData_triple, circData_cached_fm, circData_cached_fm_rcm, circData_triple_oh
 import gc
 import torch
 import random
@@ -90,6 +90,35 @@ def experiment(args_dict: dict)->None:
         valid_dataset = circData_double(upper_tensor_valid, lower_tensor_valid, label_tensor_valid)
         test_dataset = circData_double(upper_tensor_test, lower_tensor_test, label_tensor_test)
     
+    elif args_dict['model_name'] in ['bscan_unified_fm_rcm']:
+        # AUG-RCM: cached FM (rnafm) + one-hot (stem) + RCM auxiliary features
+        fm_name = 'rnafm'
+        L = args_dict['junction_bps']
+        jb = args_dict['junction_bps']
+        _RC_PERM = [3, 2, 1, 0]
+        def get_intron_rc(l_oh, L):
+            l_int = l_oh[:, :, L:]
+            return l_int[:, _RC_PERM, :].flip(dims=[2])
+
+        rcm_flanking_list = [args_dict["flanking_bps"]]
+        rcm_kmer_list = [5, 7, 9, 11, 13]
+        u_oh_train, l_oh_train, fl_tr, up_tr, lo_tr, label_tensor_train = data.seq_to_tensor_w_rcm(
+            keys_train, flanking_list=rcm_flanking_list, kmer_list=rcm_kmer_list)
+        u_oh_valid, l_oh_valid, fl_va, up_va, lo_va, label_tensor_valid = data.seq_to_tensor_w_rcm(
+            keys_valid, flanking_list=rcm_flanking_list, kmer_list=rcm_kmer_list)
+        u_oh_test, l_oh_test, fl_te, up_te, lo_te, label_tensor_test = data.seq_to_tensor_w_rcm(
+            keys_test, flanking_list=rcm_flanking_list, kmer_list=rcm_kmer_list)
+
+        train_dataset = circData_cached_fm_rcm(keys_train, label_tensor_train, fm_name,
+            upper_oh=u_oh_train[:, :, :L], lower_rc_oh=get_intron_rc(l_oh_train, L),
+            rcm_flanking=fl_tr, rcm_upper=up_tr, rcm_lower=lo_tr, junction_bps=jb)
+        valid_dataset = circData_cached_fm_rcm(keys_valid, label_tensor_valid, fm_name,
+            upper_oh=u_oh_valid[:, :, :L], lower_rc_oh=get_intron_rc(l_oh_valid, L),
+            rcm_flanking=fl_va, rcm_upper=up_va, rcm_lower=lo_va, junction_bps=jb)
+        test_dataset = circData_cached_fm_rcm(keys_test, label_tensor_test, fm_name,
+            upper_oh=u_oh_test[:, :, :L], lower_rc_oh=get_intron_rc(l_oh_test, L),
+            rcm_flanking=fl_te, rcm_upper=up_te, rcm_lower=lo_te, junction_bps=jb)
+
     elif args_dict['model_name'] in [
         'bscan_unified_ernie', 'bscan_unified_bert', 'bscan_unified_fm', 'bscan_unified_msm',
         'bscan_unified_fm_cnnadapter', 'bscan_unified_fm_mambaadapter',
@@ -383,6 +412,8 @@ if __name__ == '__main__':
                                  'bscan_unified_fm_nostem', 'bscan_unified_fm_noattn',
                                  'bscan_unified_fm_cnnonly', 'bscan_unified_fm_stemonly',
                                  'bscan_unified_fm_attnonly',
+                                 # AUG-RCM
+                                 'bscan_unified_fm_rcm',
                                  ])
     
     parser.add_argument('--dim', type=int, default=128)

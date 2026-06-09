@@ -127,6 +127,41 @@ class circData_cached_fm(Dataset):
         return self.n_samples
 
 
+class circData_cached_fm_rcm(Dataset):
+    """Cached-FM dataset + RCM auxiliary features (AUG-RCM).
+
+    Returns the same 6 tensors as circData_cached_fm plus 3 RCM tensors
+    (flanking / upper / lower), giving 9 items per sample:
+        upper_emb, lower_emb, lower_rc_emb, upper_oh, lower_rc_oh,
+        rcm_flanking, rcm_upper, rcm_lower, label
+    """
+    def __init__(self, keys, labels, fm_name, upper_oh, lower_rc_oh,
+                 rcm_flanking, rcm_upper, rcm_lower, junction_bps=100):
+        self.keys = keys
+        self.y = labels
+        self.fm_name = fm_name
+        self.cache_dir = fm_cache_dir(fm_name, junction_bps)
+        self.upper_oh = upper_oh
+        self.lower_rc_oh = lower_rc_oh
+        self.rcm_flanking = rcm_flanking
+        self.rcm_upper = rcm_upper
+        self.rcm_lower = rcm_lower
+        self.n_samples = len(keys)
+
+    def __getitem__(self, index):
+        key = self.keys[index]
+        label = self.y[index]
+        path = os.path.join(self.cache_dir, f"{key.replace('|', '_')}.pt")
+        data = torch.load(path, weights_only=True)
+        return (data['upper'], data['lower'], data['lower_rc'],
+                self.upper_oh[index], self.lower_rc_oh[index],
+                self.rcm_flanking[index], self.rcm_upper[index], self.rcm_lower[index],
+                label)
+
+    def __len__(self):
+        return self.n_samples
+
+
 class circData_triple_oh(Dataset):
     def __init__(self, seqs_upper, seqs_lower, seq_lower_rc, upper_oh, lower_rc_oh, labels):
         self.upper = seqs_upper

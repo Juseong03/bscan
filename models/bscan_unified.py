@@ -96,6 +96,10 @@ class BSCANUnified(nn.Module):
         use_cnn: bool = True,
         use_stem: bool = True,
         use_attn: bool = True,
+        # Optional RCM auxiliary branch (AUG-RCM): flanking RCM k-mer match features
+        use_rcm: bool = False,
+        d_rcm: int = 64,
+        rcm_in_dim: int = 375,   # 3 regions (flanking/upper/lower) x 5 kmer x 25
         # FM adapter (optional post-projection refinement)
         adapter_type: str | None = None,   # None | 'cnn' | 'mamba'
         adapter_layers: int = 2,           # CNN: 2 layers; Mamba: 1 layer recommended
@@ -112,6 +116,7 @@ class BSCANUnified(nn.Module):
         self.use_cnn = use_cnn
         self.use_stem = use_stem
         self.use_attn = use_attn
+        self.use_rcm = use_rcm
         self.adapter_type = adapter_type
         L = junction_bps
 
@@ -180,11 +185,21 @@ class BSCANUnified(nn.Module):
                 for _ in range(n_attn_layers)
             ])
 
+        # 4b. Branch D (optional): RCM auxiliary MLP (AUG-RCM)
+        # Fuses flanking reverse-complement-match k-mer features as a learnable branch,
+        # so the model can use explicit intron-complementarity signal during training.
+        if use_rcm:
+            self.rcm_mlp = nn.Sequential(
+                nn.Linear(rcm_in_dim, 128), nn.ReLU(inplace=True), nn.Dropout(dropout),
+                nn.Linear(128, d_rcm), nn.ReLU(inplace=True),
+            )
+
         # 5. Dynamic Classifier Input Calculation
         total_d = 0
         if use_cnn: total_d += 128 * 8 * 2 # Upper + Lower
         if use_stem: total_d += 64 * 4 * 4 + 2 * L # Stem features + row/col max
         if use_attn: total_d += d_model # Global context
+        if use_rcm: total_d += d_rcm # RCM auxiliary branch
 
         self.classifier = Classifier(d_in=total_d, d_hiddens=[256], dropout=dropout)
         self.drop = nn.Dropout(dropout)
@@ -221,7 +236,8 @@ class BSCANUnified(nn.Module):
                 elif hasattr(out, 'last_hidden_state'): out = out.last_hidden_state
             return self.proj(out.to(target_dtype))
 
-    def forward(self, upper, lower, lower_rc=None, upper_oh=None, lower_rc_oh=None, return_aux=False):
+    def forward(self, upper, lower, lower_rc=None, upper_oh=None, lower_rc_oh=None,
+                rcm_flanking=None, rcm_upper=None, rcm_lower=None, return_aux=False):
         # 1. Get Projected Features
         u_feat = self._get_fm_embedding(upper)  # [B, 2L, d_model]
         l_feat = self._get_fm_embedding(lower)
@@ -280,6 +296,19 @@ class BSCANUnified(nn.Module):
             parts.append(attn_feat.mean(dim=1))
             if return_aux:
                 aux['attn_weights'] = attn_weights_list  # list of [B, L, L] per layer
+
+        # Branch D: RCM auxiliary (AUG-RCM)
+        if self.use_rcm:
+            assert rcm_flanking is not None, "use_rcm=True requires rcm_flanking/rcm_upper/rcm_lower"
+            B = upper.size(0)
+            rcm_in = torch.cat([
+                rcm_flanking.reshape(B, -1),
+                rcm_upper.reshape(B, -1),
+                rcm_lower.reshape(B, -1),
+            ], dim=1).to(next(self.rcm_mlp.parameters()).dtype)
+            rcm_feat = self.rcm_mlp(rcm_in)
+            parts.append(rcm_feat)
+            if return_aux: aux['rcm_feat'] = rcm_feat.detach().cpu()
 
         # Final Fusion
         combined = torch.cat(parts, dim=1)

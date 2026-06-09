@@ -100,10 +100,14 @@ duplex가 무효였으므로 RCM도 외부 AUC는 미미할 가능성. 단 Tier2
 ## 2.5 산출물
 `results/rcm_aux_summary.csv` — 행: (bscan_unified_fm, +rcm@100, +rcm@500), 열: int/ext/tier2/tier3.
 
-## 2.6 구현 단계
-1. RCM 추출 (`generate_rcm_scores_subset.py`, 전체 샘플)
-2. `BSCANUnified`에 `use_rcm` branch 추가 + trainer/experiment 입력 배선
-3. 학습 + `analysis/evaluate_rcm_aux.py` 집계
+## 2.6 구현 단계  ✅ 구현 완료
+1. RCM 추출 (`generate_rcm_scores_subset.py`, 전체 샘플) — run 스크립트가 자동 호출
+2. `BSCANUnified`에 `use_rcm`/`d_rcm`/`rcm_in_dim` branch 추가 (375→128→d_rcm MLP, `parts`에 융합),
+   `circData_cached_fm_rcm` 데이터셋, trainer `bscan_unified_fm_rcm`(num_inputs=9) +
+   forward 분기, experiment.py 빌드 분기 + argparse choices 배선 완료
+3. 실행: `bash scripts/run_rcm_aux.sh [FLANKS] [DEVICE] [SEEDS]` → 집계 `python analysis/evaluate_rcm_aux.py`
+   - 모델: `bscan_unified_fm` vs `bscan_unified_fm_rcm` (flanking 100, 500)
+   - 산출: `results/rcm_aux_summary.csv` (내부 split AUC/PRC; 외부·Tier는 기존 파이프라인이 체크포인트에서 평가)
 
 ## 2.7 리스크
 - 가벼움(임베딩 재추출 불필요)이 장점. 주 리스크는 BSCAN forward에 rcm 입력 배선(데이터로더 분기) 복잡도.

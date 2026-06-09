@@ -344,6 +344,11 @@ class Trainer:
         elif model_name == 'bscan_unified_msm':
             self.model = BSCANUnified(encoder_type='rnamsm', use_cached=True, **kwargs).to(self.device)
             self.num_inputs = 6
+        elif model_name == 'bscan_unified_fm_rcm':
+            # AUG-RCM: FM (rnafm) + 3 branches + RCM auxiliary branch
+            self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
+                                      use_rcm=True, **kwargs).to(self.device)
+            self.num_inputs = 9
         # ── Branch ablation variants (FM-rnafm, transcript-grouped split) ──
         elif model_name == 'bscan_unified_fm_fulltr':
             # Full model (all 3 branches), transcript-split reference for ablation
@@ -602,6 +607,16 @@ class Trainer:
             upper_oh = data[3].to(self.device)
             lower_rc_oh = data[4].to(self.device)
             pred = self.model(upper_seq, lower_seq, lower_rc_emb, upper_oh, lower_rc_oh)
+        elif self.num_inputs == 9:
+            # BSCANUnified Cached FM + RCM auxiliary branch (AUG-RCM)
+            lower_rc_emb = data[2].to(self.device)
+            upper_oh = data[3].to(self.device)
+            lower_rc_oh = data[4].to(self.device)
+            rcm_flanking = data[5].to(self.device)
+            rcm_upper = data[6].to(self.device)
+            rcm_lower = data[7].to(self.device)
+            pred = self.model(upper_seq, lower_seq, lower_rc_emb, upper_oh, lower_rc_oh,
+                              rcm_flanking=rcm_flanking, rcm_upper=rcm_upper, rcm_lower=rcm_lower)
         else:
             assert False, 'Invalid model name'
             
