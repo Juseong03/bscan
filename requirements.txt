@@ -2,16 +2,24 @@ torch>=2.0.0
 torchvision
 numpy
 pandas
+scipy
 scikit-learn
 matplotlib
 seaborn
+einops          # used by mamba / transformer model variants
 
 # RNA Foundation Models
 multimolecule>=0.0.1
 transformers>=4.35.0
+protobuf          # required by RnaTokenizer (FM tokenizers)
+sentencepiece     # required by RnaTokenizer (FM tokenizers)
+tqdm
 
 # Thermodynamic analysis
 ViennaRNA>=2.6.0
+
+# Cross-dataset leakage control (analysis/make_external_b_hostgene.py)
+pyliftover
 
 # Optional: Mamba SSM
 mamba-ssm>=1.2.0
