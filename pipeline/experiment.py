@@ -132,15 +132,16 @@ def experiment(args_dict: dict)->None:
             l_int = l_oh[:, :, L:]
             return l_int[:, _RC_PERM, :].flip(dims=[2])
 
-        train_dataset = circData_cached_fm(keys_train, label_tensor_train, fm_name, 
-                                           upper_oh=u_oh_train[:, :, :L], 
-                                           lower_rc_oh=get_intron_rc(l_oh_train, L))
-        valid_dataset = circData_cached_fm(keys_valid, label_tensor_valid, fm_name, 
-                                           upper_oh=u_oh_valid[:, :, :L], 
-                                           lower_rc_oh=get_intron_rc(l_oh_valid, L))
-        test_dataset = circData_cached_fm(keys_test, label_tensor_test, fm_name, 
-                                          upper_oh=u_oh_test[:, :, :L], 
-                                          lower_rc_oh=get_intron_rc(l_oh_test, L))
+        jb = args_dict['junction_bps']
+        train_dataset = circData_cached_fm(keys_train, label_tensor_train, fm_name,
+                                           upper_oh=u_oh_train[:, :, :L],
+                                           lower_rc_oh=get_intron_rc(l_oh_train, L), junction_bps=jb)
+        valid_dataset = circData_cached_fm(keys_valid, label_tensor_valid, fm_name,
+                                           upper_oh=u_oh_valid[:, :, :L],
+                                           lower_rc_oh=get_intron_rc(l_oh_valid, L), junction_bps=jb)
+        test_dataset = circData_cached_fm(keys_test, label_tensor_test, fm_name,
+                                          upper_oh=u_oh_test[:, :, :L],
+                                          lower_rc_oh=get_intron_rc(l_oh_test, L), junction_bps=jb)
 
     elif args_dict['model_name'] in ['bscan_embedonly_ernie', 'bscan_embedonly_bert', 'bscan_embedonly_fm', 'bscan_embedonly_msm',
                                       'bscan_random_bert', 'bscan_random_msm']:

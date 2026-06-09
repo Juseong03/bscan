@@ -12,9 +12,10 @@ from tqdm import tqdm
 from multimolecule import RnaErnieModel, RnaBertModel, RnaFmModel, RnaMsmModel, RnaTokenizer
 from dataloader import DataSetPrep
 
-def extract_and_cache_embeddings(model_name, device_id=0, batch_size=64):
+def extract_and_cache_embeddings(model_name, device_id=0, batch_size=64, junction_bps=100):
+    from dataloader import fm_cache_dir
     device = f"cuda:{device_id}" if torch.cuda.is_available() else "cpu"
-    cache_dir = f"./fm_embeddings/{model_name}"
+    cache_dir = fm_cache_dir(model_name, junction_bps)   # jb!=100 → {enc}_jb{N}
     os.makedirs(cache_dir, exist_ok=True)
     
     print(f"🚀 Loading {model_name} and data...")
@@ -35,13 +36,25 @@ def extract_and_cache_embeddings(model_name, device_id=0, batch_size=64):
 
     model.eval()
 
+    # Guard: each FM has a max position-embedding limit. upper_seq is 2*junction_bps
+    # nt → +2 special tokens. Exceeding it gives a cryptic tensor-size error, so fail early.
+    max_pos = getattr(model.config, "max_position_embeddings", None)
+    if max_pos is not None:
+        max_jb = (max_pos - 2) // 2
+        if junction_bps > max_jb:
+            raise ValueError(
+                f"{model_name} supports junction_bps<={max_jb} (max_position_embeddings={max_pos}); "
+                f"got {junction_bps}. Use a smaller window or an encoder with longer context "
+                f"(rnafm<=512, rnamsm<=511, rnaernie<=255, rnabert<=219)."
+            )
+
     # Load all sequences.
     # Prefer the pre-built junction dict (data/seq_dict/100/, ~709MB); fall back to
     # rebuilding from the full hg19 genome (data/hg19_seq_dict.json, ~2.9GB) only if absent.
     data = DataSetPrep(
         coord_path='./data/BS_LS_coordinates_final.csv',
         seq_dict_path='./data/hg19_seq_dict.json',
-        junction_bps=100
+        junction_bps=junction_bps
     )
     try:
         junctions, _ = data.load_junction_flanking_seq()
@@ -100,6 +113,8 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--batch_size', type=int, default=64,
                         help="larger = faster on big GPUs (e.g. 256 on 40GB)")
+    parser.add_argument('--junction_bps', type=int, default=100,
+                        help="window per side; !=100 caches to fm_embeddings/<enc>_jb<N>/ (ABL-CTX)")
     args = parser.parse_args()
 
-    extract_and_cache_embeddings(args.enc_type, args.device, args.batch_size)
+    extract_and_cache_embeddings(args.enc_type, args.device, args.batch_size, args.junction_bps)

@@ -97,12 +97,19 @@ class circData(Dataset):
 
 
 
+def fm_cache_dir(fm_name, junction_bps=100):
+    """FM embedding cache dir. junction_bps=100 keeps the legacy path (backward
+    compatible); other window sizes get a separate dir so windows never collide."""
+    base = f"./fm_embeddings/{fm_name}"
+    return base if int(junction_bps) == 100 else f"{base}_jb{int(junction_bps)}"
+
+
 class circData_cached_fm(Dataset):
-    def __init__(self, keys, labels, fm_name, upper_oh, lower_rc_oh):
+    def __init__(self, keys, labels, fm_name, upper_oh, lower_rc_oh, junction_bps=100):
         self.keys = keys
         self.y = labels
         self.fm_name = fm_name
-        self.cache_dir = f"./fm_embeddings/{fm_name}"
+        self.cache_dir = fm_cache_dir(fm_name, junction_bps)
         self.upper_oh = upper_oh # [N, 4, L]
         self.lower_rc_oh = lower_rc_oh # [N, 4, L]
         self.n_samples = len(keys)
