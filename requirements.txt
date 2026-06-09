@@ -8,9 +8,14 @@ matplotlib
 seaborn
 einops          # used by mamba / transformer model variants
 
-# RNA Foundation Models
-multimolecule>=0.0.1
-transformers>=4.35.0
+# RNA Foundation Models — pinned to a verified-working combination.
+# (multimolecule/transformers/tokenizers are version-sensitive; mismatches cause
+#  tokenizer/loader errors. These exact versions are known to work together.)
+multimolecule==0.0.7
+transformers==4.46.0
+tokenizers==0.20.3
+huggingface-hub==0.32.5
+safetensors==0.5.3
 protobuf          # required by RnaTokenizer (FM tokenizers)
 sentencepiece     # required by RnaTokenizer (FM tokenizers)
 tqdm
