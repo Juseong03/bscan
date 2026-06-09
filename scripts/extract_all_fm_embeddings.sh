@@ -2,15 +2,16 @@
 # Generate FM embeddings for all (or selected) encoders on this server.
 #
 # Usage (run from repo root):
-#   bash scripts/extract_all_fm_embeddings.sh [DEVICE] [ENCODERS] [TARGET]
+#   bash scripts/extract_all_fm_embeddings.sh [DEVICE] [ENCODERS] [TARGET] [BATCH]
 #     DEVICE    GPU id (default: 0)
 #     ENCODERS  space-separated, quoted (default: "rnafm rnabert rnaernie rnamsm")
 #     TARGET    internal | external | both   (default: internal)
+#     BATCH     batch size (default: 64). On a 40GB GPU, 256 is comfortable.
 #
 # Examples:
-#   bash scripts/extract_all_fm_embeddings.sh                       # internal, all 4, GPU0
-#   bash scripts/extract_all_fm_embeddings.sh 1 "rnabert rnamsm"    # GPU1, 2 encoders
-#   bash scripts/extract_all_fm_embeddings.sh 0 "rnafm" both        # internal + external
+#   bash scripts/extract_all_fm_embeddings.sh                          # internal, all 4, GPU0
+#   bash scripts/extract_all_fm_embeddings.sh 1 "rnabert rnamsm"       # GPU1, 2 encoders
+#   bash scripts/extract_all_fm_embeddings.sh 0 "rnafm" both 256       # internal+external, batch 256
 #
 # Notes:
 #   - Internal embeddings load from data/seq_dict/100/ (709MB); the 2.9GB genome is
@@ -25,6 +26,7 @@ cd "$(dirname "$0")/.." || exit 1   # repo root
 DEVICE="${1:-0}"
 ENCODERS="${2:-rnafm rnabert rnaernie rnamsm}"
 TARGET="${3:-internal}"
+BATCH="${4:-64}"
 
 EXT_JSON="external_data/circatlas/exon_controls/seq_dict/junction.json"
 EXT_OUT="external_data/circatlas/exon_controls/fm_embeddings"
@@ -34,6 +36,7 @@ echo "FM embedding extraction"
 echo "  device   : cuda:${DEVICE}"
 echo "  encoders : ${ENCODERS}"
 echo "  target   : ${TARGET}"
+echo "  batch    : ${BATCH}"
 echo "=================================================="
 
 for ENC in ${ENCODERS}; do
@@ -41,7 +44,7 @@ for ENC in ${ENCODERS}; do
         internal|both)
             echo ""
             echo ">>> [internal] ${ENC}  ($(date +%H:%M:%S))"
-            python pipeline/extract_fm_embeddings.py --enc_type "${ENC}" --device "${DEVICE}"
+            python pipeline/extract_fm_embeddings.py --enc_type "${ENC}" --device "${DEVICE}" --batch_size "${BATCH}"
             ;;
     esac
 
@@ -58,7 +61,7 @@ for ENC in ${ENCODERS}; do
                     --model "${ENC}" \
                     --out_dir "${EXT_OUT}" \
                     --device "cuda:${DEVICE}" \
-                    --batch_size 32
+                    --batch_size "${BATCH}"
             fi
             ;;
     esac

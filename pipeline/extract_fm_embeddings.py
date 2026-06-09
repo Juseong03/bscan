@@ -12,7 +12,7 @@ from tqdm import tqdm
 from multimolecule import RnaErnieModel, RnaBertModel, RnaFmModel, RnaMsmModel, RnaTokenizer
 from dataloader import DataSetPrep
 
-def extract_and_cache_embeddings(model_name, device_id=0):
+def extract_and_cache_embeddings(model_name, device_id=0, batch_size=64):
     device = f"cuda:{device_id}" if torch.cuda.is_available() else "cpu"
     cache_dir = f"./fm_embeddings/{model_name}"
     os.makedirs(cache_dir, exist_ok=True)
@@ -56,7 +56,7 @@ def extract_and_cache_embeddings(model_name, device_id=0):
     print(f"📦 {len(keys)} total, {len(pending)} pending → extracting embeddings...")
     keys = pending
 
-    batch_size = 64 # Balanced for speed and memory
+    print(f"   batch_size={batch_size}")
     for i in tqdm(range(0, len(keys), batch_size)):
         batch_keys = keys[i:i+batch_size]
         
@@ -98,6 +98,8 @@ if __name__ == "__main__":
                         choices=['rnafm', 'rnabert', 'rnaernie', 'rnamsm'],
                         help="RNA foundation model encoder to extract")
     parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--batch_size', type=int, default=64,
+                        help="larger = faster on big GPUs (e.g. 256 on 40GB)")
     args = parser.parse_args()
 
-    extract_and_cache_embeddings(args.enc_type, args.device)
+    extract_and_cache_embeddings(args.enc_type, args.device, args.batch_size)
