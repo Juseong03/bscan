@@ -109,11 +109,21 @@ def main() -> None:
         use_full_intron=False,
     )
 
-    try:
+    # load_json() swallows FileNotFoundError (returns {}), so the missing
+    # flanking_{N}.json would NOT raise. Check the file explicitly and rebuild
+    # from the hg19 genome when absent (needed for flanking_bps > 100).
+    flank_file = f"data/seq_dict/{args.junction_bps}/flanking_{args.flanking_bps}.json"
+    if os.path.exists(flank_file):
         data.load_junction_flanking_seq()
-    except Exception:
+    else:
+        print(f"{flank_file} missing → rebuilding from genome (data/hg19_seq_dict.json) ...")
         data.get_junction_intron_seq()
         data.save_junction_flanking_seq()
+    if not data.flanking_seq:
+        raise RuntimeError(
+            f"flanking sequences are empty for flanking_bps={args.flanking_bps}. "
+            f"Need {flank_file} or the genome data/hg19_seq_dict.json to build it."
+        )
 
     keys_train, keys_valid, keys_test = data.split_data()
     # Match `experiment.py` behavior: use a single RNG instance across splits so
