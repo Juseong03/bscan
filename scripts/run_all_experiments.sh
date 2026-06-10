@@ -45,10 +45,23 @@ echo "PHASE=$PHASE  DEVICE=$DEVICE  SEEDS=$SEEDS"
 # ---------------------------------------------------------------------------
 # Phase 1 — FM embeddings (VAL/ABL prerequisite for FM models)
 # ---------------------------------------------------------------------------
+EXT_SEQ="external_data/circatlas/exon_controls/seq_dict/junction.json"
+EXT_TSV="external_data/circatlas/exon_controls/circatlas_exon_external_controls.tsv"
+
 if phase emb; then
   log "Phase 1: FM embeddings (internal + external)"
   bash scripts/extract_all_fm_embeddings.sh "$DEVICE" "$ENCODERS" internal 256
-  bash scripts/extract_all_fm_embeddings.sh "$DEVICE" "$ENCODERS" external 256
+  # External embeddings need the circAtlas seq_dict (junction.json) to exist
+  # first. Build the coordinate-control TSVs here so an `all` run is correctly
+  # ordered; note that turning the TSVs into seq_dict/junction.json (sequence
+  # extraction from the genome) is a separate step not bundled here.
+  [ -f "$EXT_TSV" ] || run python pipeline/make_circatlas_exon_controls.py
+  if [ -f "$EXT_SEQ" ]; then
+    bash scripts/extract_all_fm_embeddings.sh "$DEVICE" "$ENCODERS" external 256
+  else
+    echo "[note] $EXT_SEQ not found — skipping external embedding extraction."
+    echo "       Build the external seq_dict from $EXT_TSV, then re-run: bash scripts/run_all_experiments.sh emb"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -70,9 +83,15 @@ fi
 # ---------------------------------------------------------------------------
 if phase external; then
   log "Phase 3: external validation (VAL-EXT)"
-  [ -f external_data/circatlas/exon_controls/seq_dict/junction.json ] || \
-    run python pipeline/make_circatlas_exon_controls.py
-  run python pipeline/evaluate_circatlas_all_baselines.py --device "$DEVICE"
+  # evaluate_circatlas reads the external seq_dict directly; make_circatlas only
+  # produces the coordinate TSVs, so require the seq_dict explicitly here.
+  if [ ! -f "$EXT_SEQ" ]; then
+    echo "[error] $EXT_SEQ missing — build the circAtlas external seq_dict first"
+    echo "        (pipeline/make_circatlas_exon_controls.py → extract sequences → seq_dict/junction.json)."
+    echo "        Skipping external validation."
+  else
+    run python pipeline/evaluate_circatlas_all_baselines.py --device "$DEVICE"
+  fi
   log "Phase 3b: leakage controls (VAL-LEAK)"
   run python analysis/analyze_external_b_disjoint.py
   run python analysis/make_external_b_hostgene.py   # needs pyliftover
