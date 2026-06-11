@@ -66,6 +66,14 @@ fi
 # ---------------------------------------------------------------------------
 if stage main; then
   hdr "main: train+ablation+hardneg (seed split: gpu0=${SEEDS[0]} gpu1=${SEEDS[1]} gpu2=${SEEDS[2]})"
+  # Pre-generate rcm_scores ONCE before the parallel seed split. Otherwise all 3
+  # per-seed train jobs would race to build rcm_scores/ for circcnntri and corrupt
+  # it. Seed-independent (k-mer counts on sequences), so a single build serves all.
+  if [ -z "$(ls rcm_scores 2>/dev/null)" ]; then
+    echo "[prep] generating rcm_scores (once, full coverage) ..."
+    python pipeline/generate_rcm_scores_subset.py \
+        --junction_bps 100 --flanking_bps 100 --max_samples 100000 > "$LOG/prep_rcm.log" 2>&1
+  fi
   for i in "${!GPUS[@]}"; do
     G="${GPUS[$i]}"; S="${SEEDS[$i]}"
     (
