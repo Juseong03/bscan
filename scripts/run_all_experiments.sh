@@ -30,8 +30,12 @@ DEVICE="${2:-0}"
 SEEDS="${3:-42 123 315}"
 ENCODERS="rnafm rnabert rnaernie rnamsm"
 FM_MODELS="bscan_unified_fm bscan_unified_ernie bscan_unified_bert bscan_unified_msm"
-ONEHOT_MODELS="bscan_unified_onehot bscan"
-BASELINES="circcnn circcnnsingle circcnndouble deepcirccode circdc jedi circdeep"
+# onehot controls: same-architecture-no-FM (bscan_unified_onehot) + published
+# lightweight BSCAN (bscan_seq_lite) + legacy bscan
+ONEHOT_MODELS="bscan_unified_onehot bscan_seq_lite bscan"
+# Full published baseline set (10), consistent with the external evaluator's
+# MODELS list and docs/EXPERIMENTS.md "baseline 10종".
+BASELINES="circcnn circdc circcnnsingle circcnndouble circcnndoubleshare circcnntri circnet deepcirccode jedi circdeep"
 EPOCHS=100
 EARLYSTOP=30
 OUT=research_results
@@ -68,6 +72,13 @@ fi
 # ---------------------------------------------------------------------------
 if phase train; then
   log "Phase 2: internal training (VAL-INT)"
+  # circcnntri needs rcm_scores/. On a full run (no --max_samples) run_model_comparison
+  # ABORTS if rcm_scores/ is absent, so pre-generate full-coverage scores once
+  # (24k samples < 100k cap → all keys present; seed-independent, build once).
+  if [ -z "$(ls rcm_scores 2>/dev/null)" ]; then
+    run python pipeline/generate_rcm_scores_subset.py \
+        --junction_bps 100 --flanking_bps 100 --max_samples 100000
+  fi
   for SEED in $SEEDS; do
     run python pipeline/run_model_comparison.py \
         --models $FM_MODELS $ONEHOT_MODELS $BASELINES \

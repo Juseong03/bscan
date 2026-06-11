@@ -211,6 +211,10 @@ def build_model(model_name: str):
         return CircCNNtri(length_seq=2*L, n_rcm_features=5), "rcm"
     if model_name == "circcnnsingle":
         return CircCNNSingle(), "concat_onehot"
+    if model_name == "circcnn":
+        return CircCNN(junction_bps=L), "double_onehot"
+    if model_name == "circdc":
+        return CircDC(), "double_onehot"
     if model_name == "circcnndouble":
         return CircCNNDouble(length_seq=2*L), "double_onehot"
     if model_name == "circcnndoubleshare":
@@ -270,6 +274,8 @@ def run_inference(model, tensors: dict, input_kind: str, device: str) -> np.ndar
 SEEDS = [42, 123, 315, 777, 1004, 2024, 2025, 2026, 3407, 9001]
 
 MODELS = [
+    "circcnn",
+    "circdc",
     "circcnnsingle",
     "circcnndouble",
     "circcnndoubleshare",
