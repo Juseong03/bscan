@@ -89,7 +89,15 @@ if phase external; then
   if [ ! -f "$EXT_SEQ" ]; then
     echo "[error] $EXT_SEQ missing (genome required to build it) — skipping external validation."
   else
+    # Baselines + embed-only FM models (compute features live, no pre-extraction).
     run python pipeline/evaluate_circatlas_all_baselines.py --device "$DEVICE"
+    # Headline cached-FM models (bscan_unified_fm/ernie/bert/msm): need external
+    # FM embeddings pre-extracted. Build them on demand, then evaluate.
+    if [ ! -d "external_data/circatlas/exon_controls/fm_embeddings/rnafm" ]; then
+      run bash scripts/extract_all_fm_embeddings.sh "$DEVICE" "$ENCODERS" external 256
+    fi
+    run python analysis/evaluate_circatlas_fm_unified.py --device "cuda:$DEVICE" --seeds $SEEDS \
+        --models bscan_unified_fm bscan_unified_ernie bscan_unified_bert bscan_unified_msm
   fi
   log "Phase 3b: leakage controls (VAL-LEAK)"
   run python analysis/analyze_external_b_disjoint.py

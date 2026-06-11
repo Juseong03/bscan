@@ -29,12 +29,28 @@ L = 100  # junction_bps
 
 NUC_OH = {"A": 0, "G": 1, "C": 2, "T": 3, "U": 3}
 
-# FM adapter configs: model_name -> (encoder_type, adapter_type, adapter_layers)
-FM_ADAPTER_MODELS = {
-    "bscan_unified_fm_cnnadapter":   ("rnafm",    "cnn",   2),
-    "bscan_unified_fm_mambaadapter": ("rnafm",    "mamba", 1),
-    "bscan_unified_ernie_cnnadapter":  ("rnaernie", "cnn",   2),
-    "bscan_unified_ernie_mambaadapter":("rnaernie", "mamba", 1),
+# FM model configs: model_name -> BSCANUnified kwargs (encoder + optional
+# adapter/branch flags). Plain headline models have no adapter; adapter variants
+# are kept for completeness. All use cached FM embeddings at eval time.
+FM_MODELS = {
+    # Headline + per-encoder plain models (the main external comparison)
+    "bscan_unified_fm":    dict(encoder_type="rnafm"),
+    "bscan_unified_ernie": dict(encoder_type="rnaernie"),
+    "bscan_unified_bert":  dict(encoder_type="rnabert"),
+    "bscan_unified_msm":   dict(encoder_type="rnamsm"),
+    # Branch-ablation variants (rnafm), same cached embeddings
+    "bscan_unified_fm_fulltr":   dict(encoder_type="rnafm", use_cnn=True,  use_stem=True,  use_attn=True),
+    "bscan_unified_fm_cnnonly":  dict(encoder_type="rnafm", use_cnn=True,  use_stem=False, use_attn=False),
+    "bscan_unified_fm_stemonly": dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=False),
+    "bscan_unified_fm_attnonly": dict(encoder_type="rnafm", use_cnn=False, use_stem=False, use_attn=True),
+    "bscan_unified_fm_nocnn":    dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=True),
+    "bscan_unified_fm_nostem":   dict(encoder_type="rnafm", use_cnn=True,  use_stem=False, use_attn=True),
+    "bscan_unified_fm_noattn":   dict(encoder_type="rnafm", use_cnn=True,  use_stem=True,  use_attn=False),
+    # Adapter variants (kept for completeness; not in the main paper)
+    "bscan_unified_fm_cnnadapter":   dict(encoder_type="rnafm",    adapter_type="cnn",   adapter_layers=2),
+    "bscan_unified_fm_mambaadapter": dict(encoder_type="rnafm",    adapter_type="mamba", adapter_layers=1),
+    "bscan_unified_ernie_cnnadapter":  dict(encoder_type="rnaernie", adapter_type="cnn",   adapter_layers=2),
+    "bscan_unified_ernie_mambaadapter":dict(encoder_type="rnaernie", adapter_type="mamba", adapter_layers=1),
 }
 
 SEEDS = [42, 123, 315, 777, 1004, 2024, 2025, 2026, 3407, 9001]
@@ -115,18 +131,13 @@ def collate_fn(batch):
 def load_model(model_name: str, seed: int, device: str) -> torch.nn.Module | None:
     from models.bscan_unified import BSCANUnified
 
-    enc_type, adapter_type, adapter_layers = FM_ADAPTER_MODELS[model_name]
+    cfg = FM_MODELS[model_name]
     ckpt = Path("saved_models") / model_name / str(seed) / "model.pth"
     if not ckpt.exists():
         print(f"  [skip] {ckpt} not found")
         return None
 
-    model = BSCANUnified(
-        encoder_type=enc_type,
-        use_cached=True,
-        adapter_type=adapter_type,
-        adapter_layers=adapter_layers,
-    )
+    model = BSCANUnified(use_cached=True, **cfg)
     sd = torch.load(ckpt, map_location=device, weights_only=True)
     model.load_state_dict(sd, strict=False)
     model.to(device).eval()
@@ -160,7 +171,7 @@ def evaluate_model(
     batch_size: int,
     seeds: list[int],
 ):
-    enc_type = FM_ADAPTER_MODELS[model_name][0]
+    enc_type = FM_MODELS[model_name]["encoder_type"]
     fm_emb_dir = Path("external_data/circatlas/exon_controls/fm_embeddings") / enc_type
 
     if not fm_emb_dir.exists():
@@ -238,7 +249,8 @@ def evaluate_model(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", nargs="+",
-                        default=["bscan_unified_fm_cnnadapter"])
+                        default=["bscan_unified_fm", "bscan_unified_ernie",
+                                 "bscan_unified_bert", "bscan_unified_msm"])
     parser.add_argument("--out_dir", type=Path,
                         default=Path("external_data/circatlas/exon_controls"))
     parser.add_argument("--seq_json", type=Path,
@@ -252,13 +264,40 @@ def main():
     junction = json.loads(args.seq_json.read_text())
     print(f"Loaded {len(junction)} external examples | device={args.device}")
 
+    summaries = []
     for model_name in args.models:
-        if model_name not in FM_ADAPTER_MODELS:
-            print(f"[skip] Unknown FM adapter model: {model_name}")
+        if model_name not in FM_MODELS:
+            print(f"[skip] Unknown FM model: {model_name} (known: {', '.join(FM_MODELS)})")
             continue
         print(f"\n{'='*60}\n{model_name}\n{'='*60}")
-        evaluate_model(model_name, junction, args.out_dir, args.device,
-                       args.batch_size, args.seeds)
+        s = evaluate_model(model_name, junction, args.out_dir, args.device,
+                           args.batch_size, args.seeds)
+        if s:
+            summaries.append(s)
+
+    if not summaries:
+        print("\nNo FM external results produced (missing checkpoints or embeddings).")
+        return
+
+    # Merge into a combined FM summary (mirrors evaluate_circatlas_all_baselines.py).
+    import csv
+    combined_path = args.out_dir / "all_fm_external_control_summary.csv"
+    rows = {}
+    if combined_path.exists():
+        with open(combined_path) as f:
+            for r in csv.DictReader(f):
+                rows[r["model"]] = r
+    for s in summaries:
+        rows[s["model"]] = {k: str(v) for k, v in s.items()}
+    ordered = sorted(rows.values(), key=lambda r: float(r["auc_mean"]), reverse=True)
+    with open(combined_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(summaries[0].keys()))
+        writer.writeheader()
+        writer.writerows(ordered)
+    print(f"\n{'='*60}\nUpdated: {combined_path}")
+    for r in ordered:
+        print(f"  {r['model']:<28} AUC={float(r['auc_mean']):.4f}±{float(r['auc_std']):.4f}  "
+              f"PRC={float(r['prc_mean']):.4f}")
 
 
 if __name__ == "__main__":
