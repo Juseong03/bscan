@@ -9,12 +9,13 @@
 # external + analysis are inference-only and light → run once on GPU 0.
 #
 # Usage (run from repo root):
-#   bash scripts/run_multi_gpu.sh [STAGE] [SEEDS]
-#     STAGE = emb | main | external | newexp | all   (default: all)
-#     SEEDS = quoted seed list (default: the paper's 10 seeds).
-#             main splits them round-robin across the 3 GPUs.
-#             Fast pilot: bash scripts/run_multi_gpu.sh main "42 123 315"
-#             Paper run : bash scripts/run_multi_gpu.sh main      (10 seeds)
+#   bash scripts/run_multi_gpu.sh [STAGE] [SEEDS] [JOBS_PER_GPU]
+#     STAGE        emb | main | external | newexp | all   (default: all)
+#     SEEDS        quoted seed list (default: the paper's 10 seeds).
+#     JOBS_PER_GPU concurrent training jobs per GPU (default 2). On a 40GB GPU
+#                  the models are tiny, so use 3-4 to pack it (watch nvidia-smi).
+#             Fast pilot : bash scripts/run_multi_gpu.sh main "42 123 315"
+#             Paper, pack: bash scripts/run_multi_gpu.sh main "" 4     (10 seeds, 4/GPU)
 #
 # Long-running — launch under tmux/nohup so it survives disconnects:
 #   tmux new -s bscan 'bash scripts/run_multi_gpu.sh all'
@@ -30,6 +31,10 @@ STAGE="${1:-all}"
 # Seeds: quoted 2nd arg overrides. Default = the paper's 10 seeds
 # (paper_table_master.csv reports n_seeds=10). For a fast pilot pass "42 123 315".
 read -r -a SEEDS <<< "${2:-42 123 315 777 1004 2024 2025 2026 3407 9001}"
+# JOBS_PER_GPU: concurrent training jobs packed onto each GPU (3rd arg). BSCAN
+# models are small (~2M params, cached FM ~3-4GB/job), so a 40GB GPU is mostly
+# idle at 1/GPU. On 40GB use 3-4 (watch nvidia-smi; bump if mem <50%).
+JOBS_PER_GPU="${3:-2}"
 GPUS=(0 1 2)
 NG=${#GPUS[@]}
 ENC0="rnafm"; ENC1="rnabert rnaernie"; ENC2="rnamsm"   # encoder split for emb
@@ -83,25 +88,30 @@ if stage main; then
     python pipeline/generate_rcm_scores_subset.py \
         --junction_bps 100 --flanking_bps 100 --max_samples 100000 > "$LOG/prep_rcm.log" 2>&1
   fi
-  # Round-robin: GPU at index gi handles seeds at indices gi, gi+NG, gi+2NG, ...
-  for gi in "${!GPUS[@]}"; do
-    G="${GPUS[$gi]}"
+  # Worker pool: NWORKERS = NG * JOBS_PER_GPU. Worker wi runs on GPU[wi % NG],
+  # so JOBS_PER_GPU workers share each physical GPU concurrently (they target
+  # the same --device; (model,seed) checkpoint dirs are disjoint → no collision).
+  # Seeds are round-robined across workers.
+  NWORKERS=$(( NG * JOBS_PER_GPU ))
+  echo "  ${#SEEDS[@]} seeds | ${NG} GPUs x ${JOBS_PER_GPU} jobs = ${NWORKERS} workers"
+  for (( wi=0; wi<NWORKERS; wi++ )); do
+    G="${GPUS[$(( wi % NG ))]}"
     mine=()
     for si in "${!SEEDS[@]}"; do
-      (( si % NG == gi )) && mine+=("${SEEDS[$si]}")
+      (( si % NWORKERS == wi )) && mine+=("${SEEDS[$si]}")
     done
     [ "${#mine[@]}" -eq 0 ] && continue
-    echo "  GPU $G ← seeds: ${mine[*]}"
+    echo "  worker $wi → GPU $G ← seeds: ${mine[*]}"
     (
       for S in "${mine[@]}"; do
         bash scripts/run_all_experiments.sh train    "$G" "$S"
         bash scripts/run_all_experiments.sh ablation "$G" "$S"
         bash scripts/run_all_experiments.sh hardneg  "$G" "$S"
       done
-    ) > "$LOG/main_gpu${G}.log" 2>&1 &
+    ) > "$LOG/main_w${wi}_gpu${G}.log" 2>&1 &
   done
   wait
-  echo "main done → see $LOG/main_gpu*.log"
+  echo "main done → see $LOG/main_w*_gpu*.log"
 fi
 
 # ---------------------------------------------------------------------------
