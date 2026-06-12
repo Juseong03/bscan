@@ -43,6 +43,36 @@ wait
 
 ---
 
+## 🧩 Per-experiment scripts (simple, one file each)
+
+`scripts/exp/<name>.sh [GPU] [SEEDS]` — run a single experiment on a GPU you
+pick. Each appends an `EXP_DONE <name> seed=<S>` marker to `logs/exp/`, so
+completion is counted straight from the logs (no bookkeeping).
+
+```bash
+bash scripts/exp/prep.sh 0            # ONCE first: rcm_scores + external seq_dict/emb
+
+# then place experiments on GPUs yourself (40GB → run several at once):
+bash scripts/exp/val_int.sh 0 "42 777 2025 9001" &   # GPU0
+bash scripts/exp/val_int.sh 1 "123 1004 2026"    &   # GPU1
+bash scripts/exp/val_int.sh 2 "315 2024 3407"    &   # GPU2
+wait
+bash scripts/exp/val_ext.sh 0                        # external (after val_int)
+bash scripts/exp/analysis.sh 0
+bash scripts/exp/aug_rcm.sh 1 "42 123 315"
+bash scripts/exp/abl_ctx.sh 2 "42 123 315" "250"
+```
+
+Experiments: `prep · val_int · abl_branch · mech_hardneg · val_ext · analysis ·
+aug_rcm · abl_ctx`. Check completion any time:
+
+```bash
+bash scripts/exp_status.sh            # done/fail counts per experiment + seeds done
+watch -n 30 bash scripts/exp_status.sh
+```
+
+---
+
 ## 🧪 New experiments (standalone)
 
 | Script | Experiment | Call |
