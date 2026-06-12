@@ -59,8 +59,8 @@ bash scripts/exp/val_int.sh 2 "8 9 10"    &   # GPU2
 wait
 bash scripts/exp/val_ext.sh 0                        # external (after val_int)
 bash scripts/exp/analysis.sh 0
-bash scripts/exp/aug_rcm.sh 1 "1 2 3"
-bash scripts/exp/abl_ctx.sh 2 "1 2 3" "250"
+bash scripts/exp/aug_rcm.sh 1 "1 2 3 4 5"
+bash scripts/exp/abl_ctx.sh 2 "1 2 3 4 5" "250"
 ```
 
 Experiments: `prep · val_int · abl_branch · mech_hardneg · val_ext · analysis ·

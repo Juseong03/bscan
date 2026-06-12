@@ -12,7 +12,7 @@
 #   bash scripts/run_rcm_aux.sh [FLANKS] [DEVICE] [SEEDS]
 #     FLANKS   flanking_bps list (default: "100 500")
 #     DEVICE   GPU id (default: 0)
-#     SEEDS    quoted seeds (default: "42 123 315")
+#     SEEDS    quoted seeds (default: "1 2 3 4 5")
 #
 # Pilot first:  bash scripts/run_rcm_aux.sh "100" 0 "42"
 #
@@ -23,7 +23,7 @@ cd "$(dirname "$0")/.." || exit 1
 
 FLANKS="${1:-100 500}"
 DEVICE="${2:-0}"
-SEEDS="${3:-42 123 315}"
+SEEDS="${3:-1 2 3 4 5}"
 EPOCHS=100; EARLYSTOP=30
 OUT=research_results
 

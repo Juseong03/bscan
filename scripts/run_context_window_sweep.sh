@@ -11,7 +11,7 @@
 #     WINDOWS  junction_bps list (default: "100 250 500")
 #     ENC      FM encoder for the FM model (default: rnafm)
 #     DEVICE   GPU id (default: 0)
-#     SEEDS    quoted seeds (default: "42 123 315")
+#     SEEDS    quoted seeds (default: "1 2 3 4 5")
 #
 # Pilot first:  bash scripts/run_context_window_sweep.sh "250" rnafm 0 "42"
 #
@@ -23,7 +23,7 @@ cd "$(dirname "$0")/.." || exit 1
 WINDOWS="${1:-100 250 500}"
 ENC="${2:-rnafm}"
 DEVICE="${3:-0}"
-SEEDS="${4:-42 123 315}"
+SEEDS="${4:-1 2 3 4 5}"
 FM_MODEL="bscan_unified_fm"            # encoder selected by ENC via experiment.py mapping
 [ "$ENC" = "rnaernie" ] && FM_MODEL="bscan_unified_ernie"
 [ "$ENC" = "rnabert" ]  && FM_MODEL="bscan_unified_bert"

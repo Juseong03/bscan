@@ -5,7 +5,7 @@
 set -u
 cd "$(dirname "$0")/../.." || exit 1
 GPU="${1:-0}"
-SEEDS="${2:-1 2 3 4 5 6 7 8 9 10}"
+SEEDS="${2:-1 2 3 4 5}"
 WINDOWS="${3:-250}"
 ENC="${4:-rnafm}"
 mkdir -p logs/exp

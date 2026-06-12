@@ -128,10 +128,13 @@ fi
 # newexp — new experiments split by experiment across the 3 GPUs
 # ---------------------------------------------------------------------------
 if stage newexp; then
-  hdr "newexp: AUG-RCM (gpu0) | ABL-CTX jb250 (gpu1) | ABL-CTX jb500 (gpu2)"
-  bash scripts/run_rcm_aux.sh            "100 500" 0 "$SEEDLIST" > "$LOG/newexp_augrcm_gpu0.log"  2>&1 &
-  bash scripts/run_context_window_sweep.sh "250"  rnafm 1 "$SEEDLIST" > "$LOG/newexp_ablctx250_gpu1.log" 2>&1 &
-  bash scripts/run_context_window_sweep.sh "500"  rnafm 2 "$SEEDLIST" > "$LOG/newexp_ablctx500_gpu2.log" 2>&1 &
+  # Auxiliary experiments use 5 seeds (exploratory: only the effect direction
+  # matters, and they're heavier). Take the first 5 of the seed list.
+  AUX_SEEDS="${SEEDS[*]:0:5}"
+  hdr "newexp (aux seeds: $AUX_SEEDS): AUG-RCM (gpu0) | ABL-CTX jb250 (gpu1) | jb500 (gpu2)"
+  bash scripts/run_rcm_aux.sh            "100 500" 0 "$AUX_SEEDS" > "$LOG/newexp_augrcm_gpu0.log"  2>&1 &
+  bash scripts/run_context_window_sweep.sh "250"  rnafm 1 "$AUX_SEEDS" > "$LOG/newexp_ablctx250_gpu1.log" 2>&1 &
+  bash scripts/run_context_window_sweep.sh "500"  rnafm 2 "$AUX_SEEDS" > "$LOG/newexp_ablctx500_gpu2.log" 2>&1 &
   wait
   echo "newexp done → see $LOG/newexp_*.log"
 fi
