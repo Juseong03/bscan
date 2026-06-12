@@ -13,8 +13,8 @@
 #
 # Examples:
 #   bash scripts/run_all_experiments.sh emb 0                 # only FM embeddings
-#   bash scripts/run_all_experiments.sh train 0 "42 123 315"  # only training
-#   bash scripts/run_all_experiments.sh all 0 "42 123 315"    # everything
+#   bash scripts/run_all_experiments.sh train 0 "1 2 3"            # only training
+#   bash scripts/run_all_experiments.sh all 0 "1 2 3 4 5 6 7 8 9 10"  # everything
 #
 # Prerequisites (see docs/SETUP_NEW_SERVER.md):
 #   data/seq_dict/100/        (required)
