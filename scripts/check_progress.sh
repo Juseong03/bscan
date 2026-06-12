@@ -10,7 +10,7 @@ set -u
 cd "$(dirname "$0")/.." || exit 1
 
 LOG="logs/multigpu"
-SEEDS_DEFAULT="42 123 315 777 1004 2024 2025 2026 3407 9001"
+SEEDS_DEFAULT="1 2 3 4 5 6 7 8 9 10"
 read -r -a SEEDS <<< "${1:-$SEEDS_DEFAULT}"
 
 echo "================ BSCAN run progress  ($(date '+%F %T')) ================"

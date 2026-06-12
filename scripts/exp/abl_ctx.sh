@@ -1,11 +1,11 @@
 #!/bin/bash
 # ABL-CTX — context-window sweep (re-extract FM embeddings at wider windows).
 # Usage:  bash scripts/exp/abl_ctx.sh [GPU] [SEEDS] [WINDOWS] [ENC]
-#   e.g.  bash scripts/exp/abl_ctx.sh 1 "42 123 315" "250" rnafm
+#   e.g.  bash scripts/exp/abl_ctx.sh 1 "1 2 3" "250" rnafm
 set -u
 cd "$(dirname "$0")/../.." || exit 1
 GPU="${1:-0}"
-SEEDS="${2:-42 123 315}"
+SEEDS="${2:-1 2 3 4 5 6 7 8 9 10}"
 WINDOWS="${3:-250}"
 ENC="${4:-rnafm}"
 mkdir -p logs/exp

@@ -4,7 +4,7 @@
 set -u
 cd "$(dirname "$0")/../.." || exit 1
 GPU="${1:-0}"
-SEEDS="${2:-42 123 315}"
+SEEDS="${2:-1 2 3 4 5 6 7 8 9 10}"
 FLANKS="${3:-100 500}"
 mkdir -p logs/exp
 LOG="logs/exp/aug_rcm_gpu${GPU}.log"

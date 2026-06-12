@@ -14,7 +14,7 @@ GPU ids assume a 3-GPU server (0,1,2); adjust args as needed.
 
 ### `run_multi_gpu.sh [STAGE] [SEEDS] [JOBS_PER_GPU]`
 - **STAGE**: `emb` · `main` · `external` · `newexp` · `all` (default `all`)
-- **SEEDS**: quoted list (default = paper's 10 seeds). Pilot: `"42 123 315"`
+- **SEEDS**: quoted list (default = paper's 10 seeds). Pilot: `"1 2 3"`
 - **JOBS_PER_GPU**: concurrent jobs per GPU (default 2; use **3–4 on 40GB**)
 
 ```bash
@@ -25,7 +25,7 @@ bash scripts/run_multi_gpu.sh external && \
 bash scripts/run_multi_gpu.sh newexp
 
 # Fast pilot first (3 seeds, 2/GPU) to gauge per-job memory:
-bash scripts/run_multi_gpu.sh main "42 123 315" 2
+bash scripts/run_multi_gpu.sh main "1 2 3" 2
 ```
 
 Stage → GPU split: `main` packs seeds across GPUs · `external` runs once on GPU0
@@ -59,8 +59,8 @@ bash scripts/exp/val_int.sh 2 "315 2024 3407"    &   # GPU2
 wait
 bash scripts/exp/val_ext.sh 0                        # external (after val_int)
 bash scripts/exp/analysis.sh 0
-bash scripts/exp/aug_rcm.sh 1 "42 123 315"
-bash scripts/exp/abl_ctx.sh 2 "42 123 315" "250"
+bash scripts/exp/aug_rcm.sh 1 "1 2 3"
+bash scripts/exp/abl_ctx.sh 2 "1 2 3" "250"
 ```
 
 Experiments: `prep · val_int · abl_branch · mech_hardneg · val_ext · analysis ·

@@ -271,7 +271,7 @@ def run_inference(model, tensors: dict, input_kind: str, device: str) -> np.ndar
 
 
 # ── Main evaluation ───────────────────────────────────────────────────────────
-SEEDS = [42, 123, 315, 777, 1004, 2024, 2025, 2026, 3407, 9001]
+SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 MODELS = [
     "circcnn",
@@ -291,7 +291,7 @@ MODELS = [
 ]
 
 
-def evaluate_model(model_name: str, junction: dict, out_dir: Path, device: str, batch_size: int):
+def evaluate_model(model_name: str, junction: dict, out_dir: Path, device: str, batch_size: int, seeds=SEEDS):
     print(f"\n{'='*60}\n{model_name}\n{'='*60}")
     model_obj, input_kind = build_model(model_name)
 
@@ -305,7 +305,7 @@ def evaluate_model(model_name: str, junction: dict, out_dir: Path, device: str, 
     loader  = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
 
     all_rows = []
-    for seed in SEEDS:
+    for seed in seeds:
         ckpt = Path("saved_models") / model_name / str(seed) / "model.pth"
         if not ckpt.exists():
             print(f"  [skip] {ckpt} not found")
@@ -384,6 +384,8 @@ def main():
                         default=Path("external_data/circatlas/exon_controls/seq_dict/junction.json"))
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS,
+                        help="checkpoint seeds to evaluate (must match training seeds)")
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -392,7 +394,7 @@ def main():
 
     summaries = []
     for model_name in args.models:
-        s = evaluate_model(model_name, junction, args.out_dir, args.device, args.batch_size)
+        s = evaluate_model(model_name, junction, args.out_dir, args.device, args.batch_size, seeds=args.seeds)
         if s:
             summaries.append(s)
 

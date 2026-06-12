@@ -53,7 +53,7 @@ FM_MODELS = {
     "bscan_unified_ernie_mambaadapter":dict(encoder_type="rnaernie", adapter_type="mamba", adapter_layers=1),
 }
 
-SEEDS = [42, 123, 315, 777, 1004, 2024, 2025, 2026, 3407, 9001]
+SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
 def seq_to_onehot(seq: str, length: int) -> np.ndarray:

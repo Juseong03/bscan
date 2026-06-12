@@ -9,7 +9,7 @@
 #     PHASE   all | emb | train | external | ablation | hardneg | analysis
 #             (default: all)
 #     DEVICE  GPU id (default: 0)
-#     SEEDS   quoted seed list (default: "42 123 315")
+#     SEEDS   quoted seed list (default: "1 2 3 4 5 6 7 8 9 10")
 #
 # Examples:
 #   bash scripts/run_all_experiments.sh emb 0                 # only FM embeddings
@@ -27,7 +27,7 @@ cd "$(dirname "$0")/.." || exit 1   # repo root
 
 PHASE="${1:-all}"
 DEVICE="${2:-0}"
-SEEDS="${3:-42 123 315}"
+SEEDS="${3:-1 2 3 4 5 6 7 8 9 10}"
 ENCODERS="rnafm rnabert rnaernie rnamsm"
 FM_MODELS="bscan_unified_fm bscan_unified_ernie bscan_unified_bert bscan_unified_msm"
 # onehot controls: same-architecture-no-FM (bscan_unified_onehot) + published
@@ -101,7 +101,7 @@ if phase external; then
     echo "[error] $EXT_SEQ missing (genome required to build it) — skipping external validation."
   else
     # Baselines + embed-only FM models (compute features live, no pre-extraction).
-    run python pipeline/evaluate_circatlas_all_baselines.py --device "$DEVICE"
+    run python pipeline/evaluate_circatlas_all_baselines.py --device "cuda:$DEVICE" --seeds $SEEDS
     # Headline cached-FM models (bscan_unified_fm/ernie/bert/msm): need external
     # FM embeddings pre-extracted. Build them on demand, then evaluate.
     if [ ! -d "external_data/circatlas/exon_controls/fm_embeddings/rnafm" ]; then

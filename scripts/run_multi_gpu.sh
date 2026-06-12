@@ -3,7 +3,7 @@
 # BSCAN — 3-GPU parallel dispatcher
 # Splits the reproduction workload across 3 GPUs along collision-free axes:
 #   emb   : by ENCODER   (4 FM encoders → 3 GPUs; each writes its own dir)
-#   main  : by SEED      (42/123/315 → GPU 0/1/2; saved_models/<m>/<seed>/ +
+#   main  : by SEED      (round-robin across GPUs; saved_models/<m>/<seed>/ +
 #                         model_comparison_<tag-with-seed>.csv are seed-disjoint)
 #   newexp: by EXPERIMENT (AUG-RCM | ABL-CTX jb250 | ABL-CTX jb500)
 # external + analysis are inference-only and light → run once on GPU 0.
@@ -14,7 +14,7 @@
 #     SEEDS        quoted seed list (default: the paper's 10 seeds).
 #     JOBS_PER_GPU concurrent training jobs per GPU (default 2). On a 40GB GPU
 #                  the models are tiny, so use 3-4 to pack it (watch nvidia-smi).
-#             Fast pilot : bash scripts/run_multi_gpu.sh main "42 123 315"
+#             Fast pilot : bash scripts/run_multi_gpu.sh main "1 2 3"
 #             Paper, pack: bash scripts/run_multi_gpu.sh main "" 4     (10 seeds, 4/GPU)
 #
 # Long-running — launch under tmux/nohup so it survives disconnects:
@@ -29,8 +29,8 @@ cd "$(dirname "$0")/.." || exit 1
 
 STAGE="${1:-all}"
 # Seeds: quoted 2nd arg overrides. Default = the paper's 10 seeds
-# (paper_table_master.csv reports n_seeds=10). For a fast pilot pass "42 123 315".
-read -r -a SEEDS <<< "${2:-42 123 315 777 1004 2024 2025 2026 3407 9001}"
+# Default 1-10. For a fast pilot pass e.g. "1 2 3".
+read -r -a SEEDS <<< "${2:-1 2 3 4 5 6 7 8 9 10}"
 # JOBS_PER_GPU: concurrent training jobs packed onto each GPU (3rd arg). BSCAN
 # models are small (~2M params, cached FM ~3-4GB/job), so a 40GB GPU is mostly
 # idle at 1/GPU. On 40GB use 3-4 (watch nvidia-smi; bump if mem <50%).
