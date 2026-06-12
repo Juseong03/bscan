@@ -43,7 +43,38 @@ wait
 
 ---
 
-## 🧩 Per-experiment scripts (simple, one file each)
+## 🖥️ Server launchers — one experiment fills all GPUs (scripts/server/)
+
+`scripts/server/<exp>.sh` runs a SINGLE experiment but spreads its seeds across
+all GPUs (round-robin + packing). Run experiments one at a time on the server.
+
+```bash
+# 0) once
+bash scripts/server/prep.sh 0
+
+# 1) headline (10 seeds, packed 2/GPU over GPUs 0,1,2) — under tmux/nohup:
+nohup bash scripts/server/val_int.sh 2      > logs/exp/val_int.run      2>&1 &
+#   ...wait for val_int, then:
+nohup bash scripts/server/abl_branch.sh 2   > logs/exp/abl_branch.run   2>&1 &
+nohup bash scripts/server/mech_hardneg.sh 2 > logs/exp/mech_hardneg.run 2>&1 &
+
+# 2) external + analysis (after val_int; inference-only, GPU0)
+bash scripts/server/val_ext.sh 0
+bash scripts/server/analysis.sh 0
+
+# 3) auxiliary (5 seeds; each splits its configs across 2 GPUs)
+bash scripts/server/aug_rcm.sh        # flanking 100→GPU0, 500→GPU1
+bash scripts/server/abl_ctx.sh        # jb250→GPU1, jb500→GPU2
+```
+
+- arg 1 of the seed-parallel launchers = **JOBS_PER_GPU** (default 2; 3–4 on 40GB).
+- 2-GPU box: `export BSCAN_GPUS="0 1"` first.
+- progress: `bash scripts/exp_status.sh`. Don't start two heavy launchers at once
+  (each already uses all GPUs).
+
+---
+
+## 🧩 Per-experiment scripts (one GPU each, manual)
 
 `scripts/exp/<name>.sh [GPU] [SEEDS]` — run a single experiment on a GPU you
 pick. Each appends an `EXP_DONE <name> seed=<S>` marker to `logs/exp/`, so

@@ -7,7 +7,7 @@ GPU="${1:-0}"
 SEEDS="${2:-1 2 3 4 5}"
 FLANKS="${3:-100 500}"
 mkdir -p logs/exp
-LOG="logs/exp/aug_rcm_gpu${GPU}.log"
+LOG="logs/exp/aug_rcm_gpu${GPU}${EXP_LOG_SUFFIX:-}.log"
 
 echo "[$(date +%T)] aug_rcm START gpu=$GPU flanks=$FLANKS seeds=$SEEDS" | tee -a "$LOG"
 if bash scripts/run_rcm_aux.sh "$FLANKS" "$GPU" "$SEEDS" >> "$LOG" 2>&1; then

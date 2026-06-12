@@ -9,7 +9,7 @@ SEEDS="${2:-1 2 3 4 5}"
 WINDOWS="${3:-250}"
 ENC="${4:-rnafm}"
 mkdir -p logs/exp
-LOG="logs/exp/abl_ctx_gpu${GPU}.log"
+LOG="logs/exp/abl_ctx_gpu${GPU}${EXP_LOG_SUFFIX:-}.log"
 
 echo "[$(date +%T)] abl_ctx START gpu=$GPU windows=$WINDOWS enc=$ENC seeds=$SEEDS" | tee -a "$LOG"
 if bash scripts/run_context_window_sweep.sh "$WINDOWS" "$ENC" "$GPU" "$SEEDS" >> "$LOG" 2>&1; then
