@@ -54,10 +54,10 @@ echo "  → ${done_seeds}/${#SEEDS[@]} seeds have a comparison CSV"
 
 # 4) Checkpoints on disk -----------------------------------------------------
 echo ""; echo "── checkpoints (saved_models/<model>/<seed>/model.pth) ──"
-total=$(find saved_models -name 'model.pth' 2>/dev/null | wc -l | tr -d ' ')
+total=$(find -L saved_models -name 'model.pth' 2>/dev/null | wc -l | tr -d ' ')
 echo "  total model.pth: $total"
 for S in "${SEEDS[@]}"; do
-  c=$(find saved_models -path "*/$S/model.pth" 2>/dev/null | wc -l | tr -d ' ')
+  c=$(find -L saved_models -path "*/$S/model.pth" 2>/dev/null | wc -l | tr -d ' ')
   [ "$c" -gt 0 ] && printf "    seed %-5s : %2d models\n" "$S" "$c"
 done
 

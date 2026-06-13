@@ -138,7 +138,7 @@ Handy raw commands:
 ```bash
 nvidia-smi                                   # GPU utilisation
 tail -f logs/multigpu/main_w0_gpu0.log        # live worker log
-find saved_models -name model.pth | wc -l     # checkpoints done
+find -L saved_models -name model.pth | wc -l     # checkpoints done
 grep -riE "error|traceback|out of memory" logs/multigpu/ | tail
 ```
 
