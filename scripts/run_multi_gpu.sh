@@ -35,7 +35,7 @@ read -r -a SEEDS <<< "${2:-1 2 3 4 5 6 7 8 9 10}"
 # models are small (~2M params, cached FM ~3-4GB/job), so a 40GB GPU is mostly
 # idle at 1/GPU. On 40GB use 3-4 (watch nvidia-smi; bump if mem <50%).
 JOBS_PER_GPU="${3:-2}"
-GPUS=(0 1 2)
+read -r -a GPUS <<< "${BSCAN_GPUS:-0 1 2}"   # override: BSCAN_GPUS="0 1" for a 2-GPU box
 NG=${#GPUS[@]}
 ENC0="rnafm"; ENC1="rnabert rnaernie"; ENC2="rnamsm"   # encoder split for emb
 BATCH=256
@@ -52,23 +52,26 @@ hdr(){ echo ""; echo "############ [$(date +%H:%M:%S)] $* ############"; }
 EXT_SEQ="external_data/circatlas/exon_controls/seq_dict/junction.json"
 EXT_TSV="external_data/circatlas/exon_controls/circatlas_exon_external_controls.tsv"
 
+ENCS=("$ENC0" "$ENC1" "$ENC2")   # encoder groups, assigned to GPUs round-robin
 if stage emb; then
-  hdr "emb [internal]: FM embeddings (encoder split: gpu0=$ENC0 gpu1=$ENC1 gpu2=$ENC2)"
-  bash scripts/extract_all_fm_embeddings.sh 0 "$ENC0" internal "$BATCH" > "$LOG/emb_int_gpu0.log" 2>&1 &
-  bash scripts/extract_all_fm_embeddings.sh 1 "$ENC1" internal "$BATCH" > "$LOG/emb_int_gpu1.log" 2>&1 &
-  bash scripts/extract_all_fm_embeddings.sh 2 "$ENC2" internal "$BATCH" > "$LOG/emb_int_gpu2.log" 2>&1 &
+  hdr "emb [internal]: FM embeddings (encoder groups over ${NG} GPUs)"
+  for ei in "${!ENCS[@]}"; do
+    g="${GPUS[$(( ei % NG ))]}"
+    bash scripts/extract_all_fm_embeddings.sh "$g" "${ENCS[$ei]}" internal "$BATCH" > "$LOG/emb_int_e${ei}_gpu${g}.log" 2>&1 &
+  done
   wait
-  echo "emb[internal] done → $LOG/emb_int_gpu*.log"
+  echo "emb[internal] done → $LOG/emb_int_*.log"
 
-  hdr "emb [external]: build circAtlas seq_dict, then extract (encoder split)"
+  hdr "emb [external]: build circAtlas seq_dict, then extract"
   [ -f "$EXT_TSV" ] || python pipeline/make_circatlas_exon_controls.py
   [ -f "$EXT_SEQ" ] || python pipeline/build_circatlas_seq_dict.py
   if [ -f "$EXT_SEQ" ]; then
-    bash scripts/extract_all_fm_embeddings.sh 0 "$ENC0" external "$BATCH" > "$LOG/emb_ext_gpu0.log" 2>&1 &
-    bash scripts/extract_all_fm_embeddings.sh 1 "$ENC1" external "$BATCH" > "$LOG/emb_ext_gpu1.log" 2>&1 &
-    bash scripts/extract_all_fm_embeddings.sh 2 "$ENC2" external "$BATCH" > "$LOG/emb_ext_gpu2.log" 2>&1 &
+    for ei in "${!ENCS[@]}"; do
+      g="${GPUS[$(( ei % NG ))]}"
+      bash scripts/extract_all_fm_embeddings.sh "$g" "${ENCS[$ei]}" external "$BATCH" > "$LOG/emb_ext_e${ei}_gpu${g}.log" 2>&1 &
+    done
     wait
-    echo "emb[external] done → $LOG/emb_ext_gpu*.log"
+    echo "emb[external] done → $LOG/emb_ext_*.log"
   else
     echo "[note] $EXT_SEQ missing (genome required) — skipped external embeddings."
   fi
@@ -128,11 +131,13 @@ fi
 # newexp — new experiments split by experiment across the 3 GPUs
 # ---------------------------------------------------------------------------
 if stage newexp; then
-  # All experiments use the full seed list (10).
-  hdr "newexp (seeds: $SEEDLIST): AUG-RCM (gpu0) | ABL-CTX jb250 (gpu1) | jb500 (gpu2)"
-  bash scripts/run_rcm_aux.sh            "100 500" 0 "$SEEDLIST" > "$LOG/newexp_augrcm_gpu0.log"  2>&1 &
-  bash scripts/run_context_window_sweep.sh "250"  rnafm 1 "$SEEDLIST" > "$LOG/newexp_ablctx250_gpu1.log" 2>&1 &
-  bash scripts/run_context_window_sweep.sh "500"  rnafm 2 "$SEEDLIST" > "$LOG/newexp_ablctx500_gpu2.log" 2>&1 &
+  # All experiments use the full seed list (10). Three jobs spread over GPUs
+  # round-robin (so it works on 2 or 3 GPUs).
+  g0="${GPUS[0]}"; g1="${GPUS[$(( 1 % NG ))]}"; g2="${GPUS[$(( 2 % NG ))]}"
+  hdr "newexp (seeds: $SEEDLIST): AUG-RCM (gpu$g0) | ABL-CTX jb250 (gpu$g1) | jb500 (gpu$g2)"
+  bash scripts/run_rcm_aux.sh            "100 500" "$g0" "$SEEDLIST" > "$LOG/newexp_augrcm_gpu${g0}.log"  2>&1 &
+  bash scripts/run_context_window_sweep.sh "250"  rnafm "$g1" "$SEEDLIST" > "$LOG/newexp_ablctx250_gpu${g1}.log" 2>&1 &
+  bash scripts/run_context_window_sweep.sh "500"  rnafm "$g2" "$SEEDLIST" > "$LOG/newexp_ablctx500_gpu${g2}.log" 2>&1 &
   wait
   echo "newexp done → see $LOG/newexp_*.log"
 fi
