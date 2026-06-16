@@ -27,6 +27,15 @@
 set -u
 cd "$(dirname "$0")/.." || exit 1
 
+# Cap CPU threads PER process. Without this each python process grabs ALL cores
+# (PyTorch/numpy default), so N concurrent workers oversubscribe the CPU and
+# thrash (load >> ncores) — the GPU then starves at 0% util and training stalls.
+# Override by exporting these before calling. Keep N_workers * THREADS <= ncores.
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"
+export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-4}"
+
 STAGE="${1:-all}"
 # Seeds: quoted 2nd arg overrides. Default = the paper's 10 seeds
 # Default 1-10. For a fast pilot pass e.g. "1 2 3".

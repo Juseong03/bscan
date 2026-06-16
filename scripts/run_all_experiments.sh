@@ -25,6 +25,13 @@
 set -u
 cd "$(dirname "$0")/.." || exit 1   # repo root
 
+# Cap CPU threads per process (prevents CPU oversubscription/thrash when several
+# of these run concurrently). Override by exporting before calling.
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"
+export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-4}"
+
 PHASE="${1:-all}"
 DEVICE="${2:-0}"
 SEEDS="${3:-1 2 3 4 5 6 7 8 9 10}"
