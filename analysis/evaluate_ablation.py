@@ -135,10 +135,17 @@ def eval_external_a(name, seed):
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seeds", nargs="+", type=int, default=[1,2,3,4,5,6,7,8,9,10],
+                    help="checkpoint seeds to aggregate (must match training seeds)")
+    args = ap.parse_args()
+    seeds = args.seeds
+
     rows = []
     for name in ABLATION:
         int_aucs, int_prcs, ext_aucs, ext_prcs = [], [], [], []
-        for seed in SEEDS:
+        for seed in seeds:
             r = eval_internal(name, seed)
             if r: int_aucs.append(r[0]); int_prcs.append(r[1])
             re = eval_external_a(name, seed)

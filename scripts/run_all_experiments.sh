@@ -134,23 +134,44 @@ if phase ablation; then
     run python pipeline/experiment.py --model_name "$M" --split_strategy transcript \
         --epochs $EPOCHS --earlystop $EARLYSTOP --device "$DEVICE" --seed "$SEED"
   done; done
-  run python analysis/evaluate_ablation.py
+  # Aggregation across seeds — run ONCE (skipped when TRAIN_ONLY=1 for parallel
+  # per-seed dispatch; the dispatcher runs the `aggregate` phase once at the end).
+  [ -n "${TRAIN_ONLY:-}" ] || run python analysis/evaluate_ablation.py --seeds $SEEDS
 fi
 
 # ---------------------------------------------------------------------------
 # Phase 5 — Hard negative: MECH-HN3, MECH-HNAUG
 # ---------------------------------------------------------------------------
 if phase hardneg; then
-  log "Phase 5: hard-negative 3-tier probe (MECH-HN3)"
+  log "Phase 5b: hard-negative augmented training (MECH-HNAUG) — per-seed safe"
+  run python pipeline/train_hard_negative_augmented.py --models bscan circcnn --seeds $SEEDS
+  run python pipeline/train_hard_negative_augmented_fm.py --enc-type rnafm --seeds $SEEDS --device "$DEVICE"
+  # 3-tier pairing probe is an aggregation over all seeds → run ONCE (skip under
+  # TRAIN_ONLY; dispatcher runs it in the `aggregate` phase).
+  if [ -z "${TRAIN_ONLY:-}" ]; then
+    log "Phase 5: hard-negative 3-tier probe (MECH-HN3)"
+    for MODE in lower_intron ls_lower_intron upper_intron both_introns; do
+      run python pipeline/evaluate_hard_negative_pairing.py \
+          --models bscan circcnn circcnndouble circdc jedi circcnnsingle deepcirccode \
+                   $FM_MODELS \
+          --negative-mode "$MODE" --seeds $SEEDS --device "cuda:$DEVICE" --out-dir "$OUT"
+    done
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Phase: aggregate — once-only cross-seed evals (for parallel dispatch). Run
+# after all per-seed training is done.
+# ---------------------------------------------------------------------------
+if [ "$PHASE" = "aggregate" ]; then   # explicit only (not under 'all')
+  log "Phase aggregate: cross-seed evals (run once)"
+  run python analysis/evaluate_ablation.py --seeds $SEEDS
   for MODE in lower_intron ls_lower_intron upper_intron both_introns; do
     run python pipeline/evaluate_hard_negative_pairing.py \
         --models bscan circcnn circcnndouble circdc jedi circcnnsingle deepcirccode \
                  $FM_MODELS \
         --negative-mode "$MODE" --seeds $SEEDS --device "cuda:$DEVICE" --out-dir "$OUT"
   done
-  log "Phase 5b: hard-negative augmented training (MECH-HNAUG)"
-  run python pipeline/train_hard_negative_augmented.py --models bscan circcnn --seeds $SEEDS
-  run python pipeline/train_hard_negative_augmented_fm.py --enc-type rnafm --seeds $SEEDS --device "$DEVICE"
 fi
 
 # ---------------------------------------------------------------------------

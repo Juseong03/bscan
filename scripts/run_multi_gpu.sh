@@ -116,14 +116,21 @@ if stage main; then
     echo "  worker $wi → GPU $G ← seeds: ${mine[*]}"
     (
       for S in "${mine[@]}"; do
-        bash scripts/run_all_experiments.sh train    "$G" "$S"
-        bash scripts/run_all_experiments.sh ablation "$G" "$S"
-        bash scripts/run_all_experiments.sh hardneg  "$G" "$S"
+        # TRAIN_ONLY=1: per-seed workers only TRAIN. Cross-seed aggregation evals
+        # (evaluate_ablation, hard-negative pairing) must run ONCE — not 6x
+        # concurrently — so they're deferred to the single `aggregate` call below.
+        TRAIN_ONLY=1 bash scripts/run_all_experiments.sh train    "$G" "$S"
+        TRAIN_ONLY=1 bash scripts/run_all_experiments.sh ablation "$G" "$S"
+        TRAIN_ONLY=1 bash scripts/run_all_experiments.sh hardneg  "$G" "$S"
       done
     ) > "$LOG/main_w${wi}_gpu${G}.log" 2>&1 &
   done
   wait
-  echo "main done → see $LOG/main_w*_gpu*.log"
+  echo "main[train] done → see $LOG/main_w*_gpu*.log"
+  # Cross-seed evals, ONCE, on one GPU.
+  hdr "aggregate: evaluate_ablation + hard-negative pairing (once)"
+  bash scripts/run_all_experiments.sh aggregate "${GPUS[0]}" "$SEEDLIST" > "$LOG/aggregate.log" 2>&1
+  echo "aggregate done → $LOG/aggregate.log"
 fi
 
 # ---------------------------------------------------------------------------
