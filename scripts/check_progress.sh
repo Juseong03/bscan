@@ -1,75 +1,56 @@
 #!/bin/bash
-# Snapshot of a running (or finished) run_multi_gpu.sh job.
-# Shows GPU activity, what each GPU log is doing now, and how many
-# checkpoints / result CSVs exist so far.
+# At-a-glance health check for a run_multi_gpu.sh / run_all_experiments.sh run.
+# Prints a single VERDICT (running / stalled / idle) + the few numbers that matter.
 #
-# Usage (run from repo root, any time during/after a run):
-#   bash scripts/check_progress.sh
-#   watch -n 30 bash scripts/check_progress.sh     # auto-refresh every 30s
+# Usage:  bash scripts/check_progress.sh
+#         watch -n 60 bash scripts/check_progress.sh
 set -u
 cd "$(dirname "$0")/.." || exit 1
+read -r -a SEEDS <<< "${1:-1 2 3 4 5 6 7 8 9 10}"
+NSEED=${#SEEDS[@]}
+STAMP="/tmp/.bscan_progress_stamp"
 
-LOG="logs/multigpu"
-SEEDS_DEFAULT="1 2 3 4 5 6 7 8 9 10"
-read -r -a SEEDS <<< "${1:-$SEEDS_DEFAULT}"
+# --- gather numbers --------------------------------------------------------
+procs=$(pgrep -fc "run_model_comparison|pipeline/experiment.py|evaluate_ablation|evaluate_hard_negative|run_context_window|run_rcm_aux" 2>/dev/null)
+procs=${procs:-0}
+cores=$(nproc 2>/dev/null || echo 1)
+load1=$(awk '{printf "%.0f", $1}' /proc/loadavg 2>/dev/null || echo 0)
+ckpt=$(find -L saved_models -name model.pth 2>/dev/null | grep -cE "/($(IFS='|'; echo "${SEEDS[*]}"))/model.pth$")
+recent=$(find -L saved_models research_results -newermt "5 min ago" -type f 2>/dev/null | wc -l | tr -d ' ')
+valint=0; for S in "${SEEDS[@]}"; do [ -f "research_results/model_comparison_valint_seed_${S}.csv" ] && valint=$((valint+1)); done
+errs=$(grep -rliE "traceback|out of memory|MemoryError" logs/multigpu logs/exp 2>/dev/null | wc -l | tr -d ' ')
 
-echo "================ BSCAN run progress  ($(date '+%F %T')) ================"
+# delta vs previous run of this script
+prev=0; prevt=0
+[ -f "$STAMP" ] && read -r prev prevt < "$STAMP"
+now=$(date +%s); echo "$ckpt $now" > "$STAMP"
+delta=$((ckpt - prev)); mins=$(( (now - prevt) / 60 ))
 
-# 1) GPU activity ------------------------------------------------------------
-echo ""; echo "── GPUs ──"
-if command -v nvidia-smi >/dev/null; then
-  nvidia-smi --query-gpu=index,utilization.gpu,memory.used,memory.total \
-             --format=csv,noheader,nounits |
-    awk -F', ' '{printf "  GPU %s: util %3s%%  mem %5s/%5s MiB\n",$1,$2,$3,$4}'
+# --- verdict ---------------------------------------------------------------
+if [ "$procs" -eq 0 ]; then
+  verdict="⏸  실행 중인 작업 없음 (완료/중단되었거나 아직 시작 안 함)"
+elif [ "$recent" -gt 0 ] || { [ "$prevt" -gt 0 ] && [ "$delta" -gt 0 ]; }; then
+  verdict="✅  진행 중 (정상)"
+elif [ "$load1" -gt "$cores" ]; then
+  verdict="⚠️  정체 의심 — CPU 과부하 (load $load1 > cores $cores = thrashing)"
 else
-  echo "  (nvidia-smi not available)"
+  verdict="⚠️  멈춘 듯 — 최근 5분간 새 파일 없음 (확인 필요)"
 fi
 
-# 2) What each GPU log is doing now ------------------------------------------
-echo ""; echo "── live log tails ($LOG) ──"
-if ls "$LOG"/*.log >/dev/null 2>&1; then
-  for f in "$LOG"/*.log; do
-    last=$(grep -aE '^\[run\]|^>>>|^===|^####|Test \||Epoch' "$f" 2>/dev/null | tail -1)
-    [ -z "$last" ] && last=$(tail -1 "$f" 2>/dev/null)
-    printf "  %-26s %s\n" "$(basename "$f"):" "${last:0:90}"
-  done
+echo "════════════ BSCAN 진행 상황  $(date '+%m-%d %H:%M') ════════════"
+echo "  $verdict"
+echo "────────────────────────────────────────────────────"
+printf "  실행 프로세스   : %s개\n" "$procs"
+printf "  CPU 부하        : load %s / %s cores  %s\n" "$load1" "$cores" \
+       "$([ "$load1" -le "$cores" ] && echo '✓ 정상' || echo '✗ 과부하')"
+if [ "$prevt" -gt 0 ]; then
+  printf "  체크포인트      : %s개  (직전 확인 대비 %+d, %s분 전)\n" "$ckpt" "$delta" "$mins"
 else
-  echo "  (no logs yet in $LOG)"
+  printf "  체크포인트      : %s개  (다시 실행하면 증가량 표시)\n" "$ckpt"
 fi
-
-# 3) Internal training progress (valint comparison CSVs) ---------------------
-echo ""; echo "── internal training (model_comparison_valint_seed_*.csv) ──"
-done_seeds=0
-for S in "${SEEDS[@]}"; do
-  csv="research_results/model_comparison_valint_seed_${S}.csv"
-  if [ -f "$csv" ]; then
-    n=$(($(wc -l < "$csv") - 1))   # minus header
-    printf "  seed %-5s ✅ %2d models\n" "$S" "$n"
-    done_seeds=$((done_seeds+1))
-  else
-    printf "  seed %-5s ⏳ pending\n" "$S"
-  fi
-done
-echo "  → ${done_seeds}/${#SEEDS[@]} seeds have a comparison CSV"
-
-# 4) Checkpoints on disk -----------------------------------------------------
-echo ""; echo "── checkpoints (saved_models/<model>/<seed>/model.pth) ──"
-total=$(find -L saved_models -name 'model.pth' 2>/dev/null | wc -l | tr -d ' ')
-echo "  total model.pth: $total"
-for S in "${SEEDS[@]}"; do
-  c=$(find -L saved_models -path "*/$S/model.pth" 2>/dev/null | wc -l | tr -d ' ')
-  [ "$c" -gt 0 ] && printf "    seed %-5s : %2d models\n" "$S" "$c"
-done
-
-# 5) External + new experiments ---------------------------------------------
-echo ""; echo "── external / new experiments ──"
-fe="external_data/circatlas/exon_controls/all_fm_external_control_summary.csv"
-be="external_data/circatlas/exon_controls/all_model_external_control_summary.csv"
-[ -f "$be" ] && echo "  ✅ external baselines summary ($(($(wc -l < "$be")-1)) models)" || echo "  ⏳ external baselines: pending"
-[ -f "$fe" ] && echo "  ✅ external FM summary ($(($(wc -l < "$fe")-1)) models)"        || echo "  ⏳ external FM: pending"
-na=$(ls research_results/model_comparison_augrcm_*.csv 2>/dev/null | wc -l | tr -d ' ')
-nc=$(ls research_results/model_comparison_ablctx_*.csv 2>/dev/null | wc -l | tr -d ' ')
-echo "  AUG-RCM result CSVs : $na    ABL-CTX result CSVs : $nc"
-[ -f results/paper_table_master.csv ] && echo "  ✅ results/paper_table_master.csv present (final aggregation)"
-
-echo ""; echo "=========================================================================="
+printf "  최근 5분 새 파일: %s개  %s\n" "$recent" "$([ "$recent" -gt 0 ] && echo '← 움직이는 중' || echo '← 변화 없음')"
+printf "  val_int 완료    : %s/%s 시드\n" "$valint" "$NSEED"
+printf "  에러 로그       : %s\n" "$([ "$errs" -eq 0 ] && echo '없음 ✓' || echo "$errs개 파일 ⚠️  grep -ri traceback logs/")"
+echo "────────────────────────────────────────────────────"
+echo "  자세히: tail -f logs/multigpu/main_w0_gpu0.log"
+echo "════════════════════════════════════════════════════"
