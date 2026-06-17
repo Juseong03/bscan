@@ -16,7 +16,9 @@ procs=${procs:-0}
 cores=$(nproc 2>/dev/null || echo 1)
 load1=$(awk '{printf "%.0f", $1}' /proc/loadavg 2>/dev/null || echo 0)
 ckpt=$(find -L saved_models -name model.pth 2>/dev/null | grep -cE "/($(IFS='|'; echo "${SEEDS[*]}"))/model.pth$")
-recent=$(find -L saved_models research_results -newermt "5 min ago" -type f 2>/dev/null | wc -l | tr -d ' ')
+# "moving" = new CHECKPOINTS in last 5 min (a failed run still writes empty CSVs,
+# so counting any file would falsely look healthy).
+recent=$(find -L saved_models -name model.pth -newermt "5 min ago" 2>/dev/null | wc -l | tr -d ' ')
 valint=0; for S in "${SEEDS[@]}"; do [ -f "research_results/model_comparison_valint_seed_${S}.csv" ] && valint=$((valint+1)); done
 errs=$(grep -rliE "traceback|out of memory|MemoryError" logs/multigpu logs/exp 2>/dev/null | wc -l | tr -d ' ')
 
