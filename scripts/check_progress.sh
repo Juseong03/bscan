@@ -28,29 +28,29 @@ delta=$((ckpt - prev)); mins=$(( (now - prevt) / 60 ))
 
 # --- verdict ---------------------------------------------------------------
 if [ "$procs" -eq 0 ]; then
-  verdict="⏸  실행 중인 작업 없음 (완료/중단되었거나 아직 시작 안 함)"
+  verdict="[IDLE]  no job running (finished / stopped / not started yet)"
 elif [ "$recent" -gt 0 ] || { [ "$prevt" -gt 0 ] && [ "$delta" -gt 0 ]; }; then
-  verdict="✅  진행 중 (정상)"
+  verdict="[OK]  RUNNING (healthy)"
 elif [ "$load1" -gt "$cores" ]; then
-  verdict="⚠️  정체 의심 — CPU 과부하 (load $load1 > cores $cores = thrashing)"
+  verdict="[!!]  STALL? CPU OVERLOAD  (load $load1 > cores $cores = thrashing)"
 else
-  verdict="⚠️  멈춘 듯 — 최근 5분간 새 파일 없음 (확인 필요)"
+  verdict="[!!]  STALL? no new files in last 5 min (check)"
 fi
 
-echo "════════════ BSCAN 진행 상황  $(date '+%m-%d %H:%M') ════════════"
+echo "============ BSCAN progress  $(date '+%m-%d %H:%M') ============"
 echo "  $verdict"
-echo "────────────────────────────────────────────────────"
-printf "  실행 프로세스   : %s개\n" "$procs"
-printf "  CPU 부하        : load %s / %s cores  %s\n" "$load1" "$cores" \
-       "$([ "$load1" -le "$cores" ] && echo '✓ 정상' || echo '✗ 과부하')"
+echo "------------------------------------------------------"
+printf "  processes running : %s\n" "$procs"
+printf "  CPU load          : %s / %s cores   %s\n" "$load1" "$cores" \
+       "$([ "$load1" -le "$cores" ] && echo '[OK]' || echo '[OVERLOAD]')"
 if [ "$prevt" -gt 0 ]; then
-  printf "  체크포인트      : %s개  (직전 확인 대비 %+d, %s분 전)\n" "$ckpt" "$delta" "$mins"
+  printf "  checkpoints       : %s   (%+d since last check, %s min ago)\n" "$ckpt" "$delta" "$mins"
 else
-  printf "  체크포인트      : %s개  (다시 실행하면 증가량 표시)\n" "$ckpt"
+  printf "  checkpoints       : %s   (run again to see the increase)\n" "$ckpt"
 fi
-printf "  최근 5분 새 파일: %s개  %s\n" "$recent" "$([ "$recent" -gt 0 ] && echo '← 움직이는 중' || echo '← 변화 없음')"
-printf "  val_int 완료    : %s/%s 시드\n" "$valint" "$NSEED"
-printf "  에러 로그       : %s\n" "$([ "$errs" -eq 0 ] && echo '없음 ✓' || echo "$errs개 파일 ⚠️  grep -ri traceback logs/")"
-echo "────────────────────────────────────────────────────"
-echo "  자세히: tail -f logs/multigpu/main_w0_gpu0.log"
-echo "════════════════════════════════════════════════════"
+printf "  new files (5 min) : %s   %s\n" "$recent" "$([ "$recent" -gt 0 ] && echo '<- moving' || echo '<- no change')"
+printf "  val_int done      : %s / %s seeds\n" "$valint" "$NSEED"
+printf "  errors            : %s\n" "$([ "$errs" -eq 0 ] && echo 'none [OK]' || echo "$errs log file(s) [!!]  grep -ri traceback logs/")"
+echo "------------------------------------------------------"
+echo "  detail: tail -f logs/multigpu/main_w0_gpu0.log"
+echo "======================================================"
