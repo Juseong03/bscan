@@ -20,6 +20,12 @@
 set -u
 cd "$(dirname "$0")/.." || exit 1
 
+# Cap CPU threads per process (else each experiment.py grabs all cores → thrash).
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"
+export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-4}"
+
 WINDOWS="${1:-100 250 500}"
 ENC="${2:-rnafm}"
 DEVICE="${3:-0}"
