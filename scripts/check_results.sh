@@ -31,11 +31,20 @@ cov "ABL-CTX  jb250"      "$RR/model_comparison_ablctx_jb250_seed_%s.csv"
 cov "ABL-CTX  jb500"      "$RR/model_comparison_ablctx_jb500_seed_%s.csv"
 echo
 echo "[ aggregated outputs (exist?) ]"
-chk() { [ -f "$1" ] && echo "  [OK]      $1" || echo "  [MISSING] $1"; }
-chk "$RR/ablation_results.csv"
-chk "results/rcm_aux_summary.csv"
-chk "external_data/circatlas/exon_controls/all_fm_external_control_summary.csv"
-chk "external_data/circatlas/exon_controls/all_model_external_control_summary.csv"
+chk() { local f="$1"; shift; [ -f "$f" ] && echo "  [OK]      $* ($f)" || echo "  [MISSING] $* ($f)"; }
+chk "$RR/ablation_results.csv"                                                     "ABL-BRANCH"
+chk "results/rcm_aux_summary.csv"                                                  "AUG-RCM"
+chk "external_data/circatlas/exon_controls/all_fm_external_control_summary.csv"    "VAL-EXT FM"
+chk "external_data/circatlas/exon_controls/all_model_external_control_summary.csv" "VAL-EXT baselines"
+echo
+echo "[ mechanism / leakage / analysis (other main-paper experiments) ]"
+chk "$RR/hard_negative_pairing_lower_intron_results.csv"              "MECH-HN3 probe"
+chk "$RR/hard_negative_augmented/hard_negative_augmented_results.csv" "MECH-HNAUG"
+chk "$RR/external_b_sequence_disjoint.csv"                            "VAL-LEAK seq-disjoint"
+chk "$RR/external_b_hostgene_disjoint.csv"                            "VAL-LEAK host-disjoint"
+chk "$RR/masking_analysis.csv"                                       "MECH-MASK"
+chk "$RR/alu_coverage.csv"                                           "MECH-ALU"
+chk "$RR/duplex_alpha_sensitivity.csv"                               "AUG-DUPLEX"
 echo
 echo "[ failures ]"
 fails=$(grep -rl -iE "Unknown failure|Traceback" "$RR"/*.json logs/multigpu logs/exp 2>/dev/null | wc -l | tr -d ' ')
