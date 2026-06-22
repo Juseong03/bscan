@@ -2,9 +2,9 @@
 
 ## 1. BSCAN-FM achieves state-of-the-art accuracy with parameter efficiency
 
-All four BSCAN-FM variants (RNA-FM, RNAErnie, RNAMSM, RNABERT) achieved AUC 0.916–0.917 on the internal transcript-grouped test split across 10 independent seeds, outperforming every published baseline evaluated here: CircCNN (0.898), BSCAN-base (0.901), CircDC (0.862), and JEDI (0.854). Crucially, this performance is achieved with fewer trainable parameters (~2.0M) than most baselines (CircCNN 2.6M, CircCNN-single 6.6M, CircCNN-double 8.4M), demonstrating that the frozen FM backbone provides a high-capacity representation that allows the downstream architecture to remain compact. The consistency across all four RNA foundation models suggests that performance is robust to the choice of FM.
+All four BSCAN-FM variants (RNA-FM, RNAErnie, RNAMSM, RNABERT) attained the best internal AUC (0.879–0.885) on the internal transcript-grouped test split across 10 independent seeds, with ~2.0M trainable parameters — fewer than most baselines (CircCNN 2.6M, CircCNN-single 6.6M, CircCNN-double 8.4M). However, the internal margins are small and, importantly, every strong model — BSCAN variants and baselines alike — fits the training transcripts almost perfectly (train AUC ≈ 1.0); internal test ranking is therefore overfitting-dominated and weakly discriminative (the strongest non-FM model, CircDC, reaches 0.870 internally, above BSCAN-onehot at 0.860). The decisive comparison is cross-dataset generalization (§2 below), where the four FMs behave consistently — suggesting robustness to the choice of FM — while the internal ranking inverts.
 
-A branch ablation (Results §3.3) clarifies which architectural components drive this performance. Among the three branches, the local convolutional branch is the principal contributor to cross-dataset generalization: the CNN branch alone reproduces nearly the full external AUC (0.845 vs. 0.850), whereas removing it collapses external AUC to 0.714. The WC stem-map and cross-attention branches generalize poorly in isolation (0.725 and 0.685) and are largely redundant once the CNN branch is present — removing either leaves external AUC essentially unchanged. We therefore interpret the stem and attention branches as contributing primarily interpretability (explicit intronic base-pairing maps and junction interaction weights) rather than independent generalization benefit, while the convolutional branch operating on FM-projected features captures the transferable local sequence motifs that underlie BSCAN's robustness.
+A branch ablation (Results §3.3) clarifies which architectural components drive generalization. The local convolutional branch is indispensable: every configuration that omits it collapses externally (Stem + Attn: 0.694; Attn-only: 0.685), whereas any configuration retaining it stays ≥ 0.767. CNN alone, however, is not sufficient (CNN-only external 0.767, below the full model's 0.839); pairing CNN with either the stem or the attention branch recovers the best external AUC (CNN + Stem: 0.845; CNN + Attn: 0.843), and the two-branch combinations are indistinguishable from the full model. We therefore interpret the convolutional branch operating on FM-projected features as capturing the transferable local sequence motifs that underlie BSCAN's robustness, with the stem and attention branches contributing both a needed complement to CNN and interpretability (explicit intronic base-pairing maps and junction interaction weights).
 
 ---
 
@@ -14,9 +14,9 @@ The most important finding of this study emerges when internal accuracy is compa
 
 | Model family | Internal AUC | External AUC | Drop |
 |---|:---:|:---:|:---:|
-| BSCAN-FM (4 variants) | 0.916–0.917 | 0.838–0.846 | ~8% |
-| BSCAN-base | 0.901 | 0.720 | 20% |
-| CircCNN | 0.898 | 0.704 | 22% |
+| BSCAN-FM (4 variants) | 0.879–0.885 | 0.838–0.846 | ~4–5% |
+| BSCAN-base | 0.856 | 0.720 | 16% |
+| CircCNN | 0.860 | 0.701 | 18% |
 | CircCNN-single/tri | 0.889–0.894 | 0.538–0.539 | ~39% |
 | CircDC / JEDI | 0.854–0.862 | 0.467–0.501 | 42–45% |
 

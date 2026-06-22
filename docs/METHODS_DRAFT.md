@@ -13,7 +13,7 @@ This window (junction_bps = 100) captures canonical splice site signals (GT-AG d
 
 All BSCAN-FM models and the majority of baselines are evaluated using a **transcript-grouped split**, in which all junctions sharing a transcript identifier are assigned exclusively to one partition. This prevents information leakage between training and test sets that would arise from correlated splicing patterns within the same transcript. Splits are constructed with `StratifiedGroupKFold` (n_splits=5, shuffle=True) to produce a train-valid/test partition, followed by a second `StratifiedGroupKFold` (n_splits=4) to divide the train-valid portion into train/valid. The intended nominal ratio is approximately 60/20/20, but the realized proportions vary across seeds due to transcript group size constraints; for the primary seed (42), the resulting partition sizes are 15,122 / 4,161 / 4,933 (train/valid/test), corresponding to approximately 62% / 17% / 20% of the full dataset. Stratification ensures equal BS:LS ratios within each partition.
 
-All results are averaged over 10 independent random seeds (seeds 42, 123, 315, 777, 1004, 2024, 2025, 2026, 3407, 9001), each producing a distinct transcript-grouped split and random model initialization.
+All results are averaged over 10 independent random seeds (seeds 1–10), each producing a distinct transcript-grouped split and random model initialization.
 
 ## 2.3 RNA foundation model embeddings
 

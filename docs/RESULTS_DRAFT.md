@@ -1,27 +1,29 @@
 # Results
 
-## 3.1 BSCAN-FM achieves state-of-the-art accuracy on internal validation
+## 3.1 Internal validation: BSCAN-FM is best, but internal ranking is overfitting-dominated
 
-We evaluated all models on the internal transcript-grouped test split across 10 independent seeds. All four BSCAN-FM variants achieved AUC 0.916–0.917, outperforming every published baseline (**Table 1**). BSCAN-RNAErnie (0.9168 ± 0.0021) and BSCAN-RNAMSM (0.9167 ± 0.0023) ranked highest, with BSCAN-RNA-FM (0.9167 ± 0.0023) and BSCAN-RNABERT (0.9164 ± 0.0020) marginally behind; all four are statistically indistinguishable. The best-performing published baseline, CircCNN, reached 0.8983 ± 0.0039, followed by BSCAN-base (0.9009 ± 0.0019), CircCNN-single (0.8942 ± 0.0021), and CircCNN-tri (0.8892 ± 0.0037). Older architectures performed substantially lower: DeepCircCode (0.8765 ± 0.0035), CircDC (0.8619 ± 0.0058), JEDI (0.8538 ± 0.0028), and CircDeep (0.7899 ± 0.0074).
+We evaluated all models on the internal transcript-grouped test split across 10 independent seeds. The four BSCAN-FM variants achieved the highest internal AUC (0.879–0.885), led by BSCAN-RNAMSM (0.8852 ± 0.0110), with BSCAN-RNA-FM (0.8836 ± 0.0114), BSCAN-RNAErnie (0.8836 ± 0.0095) and BSCAN-RNABERT (0.8790 ± 0.0084) close behind; the four are statistically indistinguishable (**Table 1**). However, the internal margins are small and the ranking among strong models is **not robust**: every model — BSCAN variants and baselines alike — fits the training transcripts almost perfectly (train AUC ≈ 1.00, train MCC ≈ 0.99), so internal test performance is dominated by overfitting and is sensitive to the particular transcript split. Notably the strongest non-FM model on internal validation is **CircDC (0.8699 ± 0.0116)** — above BSCAN-onehot (0.8602 ± 0.0097), CircCNN (0.8595 ± 0.0111), and BSCAN-base (0.8560 ± 0.0103) — even though CircDC collapses to near chance externally (§3.2). Remaining baselines: CircNet (0.8498), DeepCircCode (0.8499), CircCNN-single (0.8488), CircCNN-tri (0.8450), CircCNN-double (0.8424), JEDI (0.8378), and CircDeep (0.7611). Because all strong models overfit internally, internal AUC is weakly discriminative; the decisive comparison is external generalization (§3.2).
 
-**Table 1. Internal validation — transcript-grouped split, 10 seeds.**
+**Table 1. Internal validation — transcript-grouped split, 10 seeds (mean ± SD).**
 
 | Model | Params | AUC | AUPRC | MCC |
 |-------|-------:|:---:|:-----:|:---:|
-| **BSCAN-RNAErnie** | 2.0M | **0.9168 ± 0.0021** | 0.9394 | 0.7322 |
-| **BSCAN-RNAMSM** | 2.0M | 0.9167 ± 0.0023 | 0.9388 | 0.7380 |
-| **BSCAN-RNA-FM** | 2.0M | 0.9167 ± 0.0023 | 0.9392 | 0.7330 |
-| **BSCAN-RNABERT** | 1.9M | 0.9164 ± 0.0020 | 0.9390 | 0.7359 |
-| BSCAN-onehot | 2.0M | 0.9164 ± 0.0024 | 0.9366 | 0.7215 |
-| BSCAN-base | 3.9M | 0.9009 ± 0.0019 | 0.9247 | 0.6853 |
-| CircCNN | 2.6M | 0.8983 ± 0.0039 | 0.9223 | 0.6792 |
-| CircCNN-single | 6.6M | 0.8942 ± 0.0021 | 0.9173 | 0.6713 |
-| CircCNN-tri | 1.7M | 0.8892 ± 0.0037 | 0.9133 | 0.6625 |
-| CircCNN-double | 8.4M | 0.8878 ± 0.0050 | 0.9110 | 0.6572 |
-| DeepCircCode | 0.9M | 0.8765 ± 0.0035 | 0.9031 | 0.6112 |
-| CircDC | 0.2M | 0.8619 ± 0.0058 | 0.8961 | 0.6455 |
-| JEDI | 2.6M | 0.8538 ± 0.0028 | 0.8844 | 0.5916 |
-| CircDeep | 1.2M | 0.7899 ± 0.0074 | 0.7990 | 0.4537 |
+| **BSCAN-RNAMSM** | 2.0M | **0.8852 ± 0.0110** | 0.9156 | 0.7045 |
+| **BSCAN-RNA-FM** | 2.0M | 0.8836 ± 0.0114 | 0.9147 | 0.7064 |
+| **BSCAN-RNAErnie** | 2.0M | 0.8836 ± 0.0095 | 0.9144 | 0.7049 |
+| **BSCAN-RNABERT** | 1.9M | 0.8790 ± 0.0084 | 0.9121 | 0.7010 |
+| CircDC | 0.2M | 0.8699 ± 0.0116 | 0.9045 | 0.6669 |
+| BSCAN-onehot | 2.0M | 0.8602 ± 0.0097 | 0.8981 | 0.6500 |
+| CircCNN | 2.6M | 0.8595 ± 0.0111 | 0.8984 | 0.6552 |
+| BSCAN-lite | 2.0M | 0.8586 ± 0.0109 | 0.8984 | 0.6600 |
+| BSCAN-base | 3.9M | 0.8560 ± 0.0103 | 0.8965 | 0.6581 |
+| DeepCircCode | 0.9M | 0.8499 ± 0.0107 | 0.8881 | 0.6116 |
+| CircNet | — | 0.8498 ± 0.0093 | 0.8893 | 0.6146 |
+| CircCNN-single | 6.6M | 0.8488 ± 0.0089 | 0.8905 | 0.6288 |
+| CircCNN-tri | 1.7M | 0.8450 ± 0.0095 | 0.8873 | 0.6271 |
+| CircCNN-double | 8.4M | 0.8424 ± 0.0106 | 0.8855 | 0.6240 |
+| JEDI | 2.6M | 0.8378 ± 0.0114 | 0.8704 | 0.5655 |
+| CircDeep | 1.2M | 0.7611 ± 0.0258 | 0.7833 | 0.4196 |
 
 **Bold**: BSCAN-FM variants. Params = trainable parameters only; FM backbone excluded.
 
@@ -33,30 +35,31 @@ Notably, all four BSCAN-FM variants achieve this performance with ~2.0M trainabl
 
 To assess generalization beyond the training benchmark, all models were evaluated on the circAtlas exon-length-matched external control set (8,217 samples; **Table 2**). The results reveal a striking divergence between internal accuracy and cross-dataset performance (**Figure 1**).
 
-BSCAN-FM variants maintained external AUC 0.838–0.846, corresponding to an internal-to-external drop of only 7.7–8.6%. By contrast, CNN-only baselines collapsed: CircCNN dropped 21.6% to external AUC 0.704; CircCNN-single and CircCNN-tri dropped ~39% to AUC 0.539; CircDC dropped 41.9% to AUC 0.501; and JEDI dropped 45.3% to AUC 0.467 — effectively performing worse than chance on the external set.
+BSCAN-FM variants maintained external AUC 0.838–0.846, corresponding to an internal-to-external drop of only 3.8–5.2%. By contrast, every one-hot and baseline model collapsed: BSCAN-base dropped to external AUC 0.720 (−15.8%) and CircCNN to 0.701 (−18.4%), while the remaining baselines fell to 0.47–0.57 (drop 32–45%) — at or below chance on the external set. The collapse is largest, and most diagnostic, for **CircDC**: the strongest non-FM model internally (0.870) falls to external AUC 0.513 (−41.1%), and JEDI drops 44.5% to 0.465. Thus the internal ranking (§3.1) inverts under cross-dataset evaluation: models that overfit hardest internally generalize worst.
 
-**Table 2. External validation — circAtlas exon-length-matched controls.**
+**Table 2. External validation — circAtlas exon-length-matched controls (Drop% vs. internal §3.1).**
 
 | Model | External AUC | External AUPRC | External MCC | Drop% |
 |-------|:------------:|:--------------:|:------------:|:-----:|
-| **BSCAN-RNABERT** | **0.8458 ± 0.0136** | 0.7222 | 0.6876 | **7.7%** |
-| **BSCAN-RNAMSM** | 0.8443 ± 0.0144 | 0.7266 | 0.7125 | 7.9% |
-| **BSCAN-RNA-FM** | 0.8418 ± 0.0143 | 0.7210 | 0.6991 | 8.2% |
-| **BSCAN-RNAErnie** | 0.8378 ± 0.0162 | 0.7207 | 0.6836 | 8.6% |
-| BSCAN-base | 0.7204 ± 0.0210 | 0.6255 | 0.2940 | 20.0% |
-| CircCNN | 0.7041 ± 0.0127 | 0.6151 | 0.2530 | 21.6% |
-| BSCAN-onehot | 0.5723 ± 0.0220 | 0.5202 | 0.0382 | 37.6% |
-| DeepCircCode | 0.5556 ± 0.0101 | 0.5082 | 0.0343 | 36.6% |
-| CircCNN-single | 0.5392 ± 0.0096 | 0.4992 | −0.012 | 39.7% |
-| CircCNN-tri | 0.5380 ± 0.0091 | 0.4997 | −0.016 | 39.5% |
-| CircCNN-double | 0.5092 ± 0.0081 | 0.4802 | −0.047 | 42.6% |
-| CircDC | 0.5010 ± 0.0072 | 0.4759 | −0.075 | 41.9% |
-| CircDeep | 0.4940 ± 0.0068 | 0.4927 | −0.010 | 37.5% |
-| JEDI | 0.4672 ± 0.0049 | 0.4563 | −0.097 | 45.3% |
+| **BSCAN-RNABERT** | **0.8458 ± 0.0136** | 0.7222 | 0.6876 | **3.8%** |
+| **BSCAN-RNAMSM** | 0.8443 ± 0.0144 | 0.7266 | 0.7125 | 4.6% |
+| **BSCAN-RNA-FM** | 0.8418 ± 0.0143 | 0.7210 | 0.6991 | 4.7% |
+| **BSCAN-RNAErnie** | 0.8378 ± 0.0162 | 0.7207 | 0.6836 | 5.2% |
+| BSCAN-base | 0.7204 ± 0.0210 | 0.6255 | 0.2940 | 15.8% |
+| CircCNN | 0.7011 ± 0.0220 | 0.6120 | 0.2406 | 18.4% |
+| CircNet | 0.5739 ± 0.0222 | 0.5228 | 0.0549 | 32.5% |
+| BSCAN-onehot | 0.5723 ± 0.0220 | 0.5202 | 0.0382 | 33.5% |
+| DeepCircCode | 0.5420 ± 0.0149 | 0.5010 | 0.0031 | 36.2% |
+| CircCNN-tri | 0.5405 ± 0.0096 | 0.4994 | −0.021 | 36.0% |
+| CircCNN-single | 0.5377 ± 0.0079 | 0.4977 | −0.012 | 36.7% |
+| CircCNN-double | 0.5295 ± 0.0078 | 0.4900 | −0.047 | 37.1% |
+| CircDC | 0.5128 ± 0.0138 | 0.4835 | −0.040 | 41.1% |
+| CircDeep | 0.4910 ± 0.0093 | 0.4810 | −0.023 | 35.5% |
+| JEDI | 0.4654 ± 0.0043 | 0.4558 | −0.099 | 44.5% |
 
 External MCC < 0 indicates classification worse than majority-class baseline.
 
-A critical architectural control isolates the contribution of the FM representation from BSCAN's three-branch design: BSCAN-onehot, which uses the identical architecture as BSCAN-FM but replaces the frozen FM with a learnable token embedding, drops 37.6% to external AUC 0.572 — on par with the worst-performing CNN baselines and identical to CircCNN-single and CircCNN-tri in magnitude. This dissociation demonstrates that the generalization advantage of BSCAN-FM arises specifically from the frozen FM representation, not from architectural choices. Bootstrap confidence intervals confirm that all reported external AUC differences are highly significant (10,000 bootstrap resamples, all p < 0.001): BSCAN-RNA-FM vs. BSCAN-onehot: Δ = +0.270, 95% CI [+0.255, +0.285]; BSCAN-RNA-FM vs. CircCNN: Δ = +0.138, 95% CI [+0.126, +0.148].
+A critical architectural control isolates the contribution of the FM representation from BSCAN's three-branch design: BSCAN-onehot, which uses the identical architecture as BSCAN-FM but replaces the frozen FM with a learnable token embedding, drops 33.5% to external AUC 0.572 — on par with the worst-performing CNN baselines. This dissociation demonstrates that the generalization advantage of BSCAN-FM arises specifically from the frozen FM representation, not from architectural choices. Bootstrap confidence intervals confirm that the reported external AUC differences are highly significant (10,000 bootstrap resamples, all p < 0.001): BSCAN-RNA-FM vs. BSCAN-onehot: Δ ≈ +0.270; BSCAN-RNA-FM vs. CircCNN: Δ ≈ +0.141.
 
 **Leakage control.** To rule out the possibility that external performance is inflated by overlap between the internal training set and the external validation set, we applied two complementary controls. *(i) Sequence-level.* Only 45/8,217 (0.5%) of external samples shared an exact junction sequence with any training example, and re-evaluating all models on the sequence-disjoint subset (8,172 samples, 99.5%) left every AUC essentially unchanged (Δ ≤ 0.001; e.g., BSCAN-RNA-FM 0.8418 → 0.8408). *(ii) Host-locus-level.* We lifted all internal hg19 junction coordinates to hg38 (pyliftover; 24,220/24,226 lifted) and removed any circAtlas sample whose genomic span overlapped an internal locus (same chromosome and strand, ±100-nt padding). On the resulting host-locus-disjoint subset (5,305 samples, 64.6%; drawn entirely from loci absent from training), all FM models retained strong performance with only a small, uniform decrease (BSCAN-RNA-FM 0.8418 → 0.8182, Δ = −0.024; RNABERT 0.8458 → 0.8227; RNAMSM 0.8443 → 0.8209; RNAErnie 0.8378 → 0.8150), while baselines dropped comparably (CircCNN-tri −0.014, JEDI −0.012). The FM models thus maintain an AUC of ~0.82 — and their large margin over baselines (0.52–0.70) — even on genomic loci entirely disjoint from the training set, confirming that the external generalization is a genuine property of the learned representation rather than an artifact of sequence or host-locus leakage.
 
@@ -64,29 +67,29 @@ A critical architectural control isolates the contribution of the FM representat
 
 ## 3.3 Branch ablation: the convolutional branch drives generalization
 
-To quantify the contribution of each of BSCAN's three branches (CNN, WC stem map, cross-attention), we trained seven architectural variants on the RNA-FM backbone under identical conditions — transcript-grouped split, 3 seeds (42, 123, 315) — and evaluated each on both the internal test set and the circAtlas external set (**Table 3**, **Figure 2**). All variants share the same frozen FM encoder and projection; only the downstream branch composition differs.
+To quantify the contribution of each of BSCAN's three branches (CNN, WC stem map, cross-attention), we trained seven architectural variants on the RNA-FM backbone under identical conditions — transcript-grouped split, 10 seeds — and evaluated each on both the internal test set and the circAtlas external set (**Table 3**, **Figure 2**). All variants share the same frozen FM encoder and projection; only the downstream branch composition differs.
 
-**Table 3. Branch ablation (RNA-FM backbone, transcript-grouped split, 3 seeds).**
+**Table 3. Branch ablation (RNA-FM backbone, transcript-grouped split, 10 seeds).**
 
 | Configuration | Branches | Internal AUC | External AUC | Drop% |
 |---------------|----------|:---:|:---:|:---:|
-| **Full** | CNN + Stem + Attn | 0.8907 ± 0.005 | 0.8496 ± 0.006 | 4.6% |
-| Full − Attn | CNN + Stem | 0.8838 ± 0.002 | **0.8498 ± 0.007** | 3.8% |
-| Full − Stem | CNN + Attn | 0.8838 ± 0.003 | 0.8487 ± 0.001 | 4.0% |
-| FM + CNN | CNN only | 0.8911 ± 0.007 | 0.8450 ± 0.007 | 5.2% |
-| Full − CNN | Stem + Attn | 0.8695 ± 0.012 | 0.7137 ± 0.030 | 17.9% |
-| FM + Stem | Stem only | 0.8402 ± 0.005 | 0.7248 ± 0.017 | 13.7% |
-| FM + Attn | Attn only | 0.8674 ± 0.010 | 0.6852 ± 0.077 | 21.0% |
+| Full − Attn | CNN + Stem | 0.8802 ± 0.009 | **0.8454 ± 0.006** | 4.0% |
+| Full − Stem | CNN + Attn | 0.8777 ± 0.012 | 0.8430 ± 0.010 | 4.0% |
+| **Full** | CNN + Stem + Attn | 0.8775 ± 0.012 | 0.8393 ± 0.027 | 4.3% |
+| FM + CNN | CNN only | 0.8688 ± 0.011 | 0.7672 ± 0.033 | 11.7% |
+| FM + Stem | Stem only | 0.8392 ± 0.013 | 0.7422 ± 0.029 | 11.6% |
+| Full − CNN | Stem + Attn | 0.8603 ± 0.013 | 0.6938 ± 0.038 | 19.4% |
+| FM + Attn | Attn only | 0.8602 ± 0.010 | 0.6847 ± 0.033 | 20.4% |
 
 Three findings emerge:
 
-1. **The CNN branch is the dominant contributor to cross-dataset generalization.** Removing it (Full − CNN) is the single most damaging ablation, collapsing external AUC from 0.850 to 0.714 (drop 4.6% → 17.9%). Conversely, the CNN branch alone (FM + CNN) nearly reproduces the full model's external performance (0.845 vs. 0.850).
+1. **The CNN branch is necessary for cross-dataset generalization.** Every configuration that omits the CNN branch collapses externally — Full − CNN (Stem + Attn): 0.694, and Attn-only: 0.685 (drops ~19–20%) — whereas every configuration that retains it stays at external AUC ≥ 0.767. Removing CNN is thus the single most damaging ablation.
 
-2. **The stem and cross-attention branches are largely redundant given the CNN branch.** Removing either from the full model leaves external AUC essentially unchanged (Full − Stem: 0.849; Full − Attn: 0.850), and individually each generalizes poorly (FM + Stem: 0.725; FM + Attn: 0.685). They contribute marginally to internal accuracy but little additional cross-dataset robustness once the local convolutional branch is present.
+2. **CNN alone is not sufficient; a second branch is needed to reach full performance.** CNN-only (FM + CNN) reaches external AUC 0.767, well below the full model (0.839); pairing CNN with either the stem or the attention branch recovers the best external performance (CNN + Stem = Full − Attn: 0.845; CNN + Attn = Full − Stem: 0.843). The two-branch CNN combinations are statistically indistinguishable from the full three-branch model.
 
-3. **Cross-attention alone generalizes worst** (external AUC 0.685, drop 21.0%), indicating that the global pairwise interaction it models is the most susceptible to the exon-composition shortcut, whereas the local motif features captured by the CNN branch are the most transferable.
+3. **Stem and attention branches do not generalize on their own** (Stem-only: 0.742; Attn-only: 0.685, the worst), indicating that the global/structural signals they model are more susceptible to the exon-composition shortcut, whereas the local motif features captured by the CNN branch are the most transferable and are required as a backbone.
 
-Together these results identify the local convolutional branch operating on FM-projected features as the principal driver of BSCAN's generalization, with the stem and attention branches providing interpretability (explicit base-pairing maps and junction interaction weights) and small accuracy gains rather than independent generalization benefit. Note that under the transcript-grouped protocol the full model reaches 0.891 internal AUC (lower than the 0.917 reported under the stratified-sample protocol in Table 1), reflecting the harder cross-transcript generalization demanded by grouped splitting.
+Together these results identify the local convolutional branch operating on FM-projected features as the indispensable driver of BSCAN's generalization, complemented by either the stem or attention branch to reach peak external AUC; the stem and attention branches additionally provide interpretability (explicit base-pairing maps and junction interaction weights). The full model's internal AUC (0.878) matches the BSCAN-FM headline value in Table 1, consistent with the overfitting-dominated internal regime discussed in §3.1.
 
 ---
 
