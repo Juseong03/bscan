@@ -96,6 +96,7 @@ class BSCANUnified(nn.Module):
         use_cnn: bool = True,
         use_stem: bool = True,
         use_attn: bool = True,
+        use_mamba: bool = False,   # Mamba (SSM) local/sequential branch — alternative to CNN
         # Optional RCM auxiliary branch (AUG-RCM): flanking RCM k-mer match features
         use_rcm: bool = False,
         d_rcm: int = 64,
@@ -116,6 +117,7 @@ class BSCANUnified(nn.Module):
         self.use_cnn = use_cnn
         self.use_stem = use_stem
         self.use_attn = use_attn
+        self.use_mamba = use_mamba
         self.use_rcm = use_rcm
         self.adapter_type = adapter_type
         L = junction_bps
@@ -185,6 +187,11 @@ class BSCANUnified(nn.Module):
                 for _ in range(n_attn_layers)
             ])
 
+        # Branch A': Mamba (SSM) local/sequential branch — drop-in alternative to CNN.
+        # Processes each sequence's projected FM features and mean-pools to [B, d_model].
+        if use_mamba:
+            self.mamba_branch = _MambaAdapter(d_model, n_layers=2)
+
         # 4b. Branch D (optional): RCM auxiliary MLP (AUG-RCM)
         # Fuses flanking reverse-complement-match k-mer features as a learnable branch,
         # so the model can use explicit intron-complementarity signal during training.
@@ -199,6 +206,7 @@ class BSCANUnified(nn.Module):
         if use_cnn: total_d += 128 * 8 * 2 # Upper + Lower
         if use_stem: total_d += 64 * 4 * 4 + 2 * L # Stem features + row/col max
         if use_attn: total_d += d_model # Global context
+        if use_mamba: total_d += d_model * 2 # Mamba branch: pooled upper + lower
         if use_rcm: total_d += d_rcm # RCM auxiliary branch
 
         self.classifier = Classifier(d_in=total_d, d_hiddens=[256], dropout=dropout)
@@ -271,6 +279,12 @@ class BSCANUnified(nn.Module):
             cnn_u = self.cnn(u_feat.transpose(1, 2)).view(u_feat.size(0), -1)
             cnn_l = self.cnn(l_feat.transpose(1, 2)).view(l_feat.size(0), -1)
             parts.extend([cnn_u, cnn_l])
+
+        # Branch A': Mamba (local/sequential, alternative to CNN)
+        if self.use_mamba:
+            mb_u = self.mamba_branch(u_feat).mean(dim=1)   # [B, d_model]
+            mb_l = self.mamba_branch(l_feat).mean(dim=1)
+            parts.extend([mb_u, mb_l])
 
         # Branch B: Stem
         if self.use_stem:

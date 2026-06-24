@@ -385,6 +385,18 @@ class Trainer:
             self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
                                       use_cnn=False, use_stem=True, use_attn=False, **kwargs).to(self.device)
             self.num_inputs = 6
+        elif model_name == 'bscan_unified_fm_mambastem':
+            # FM + Mamba (local/sequential) + Stem, no CNN/Attn — head-comparison variant
+            self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
+                                      use_cnn=False, use_stem=True, use_attn=False,
+                                      use_mamba=True, **kwargs).to(self.device)
+            self.num_inputs = 6
+        elif model_name == 'bscan_unified_fm_mambaonly':
+            # FM + Mamba only (pure local/sequential head)
+            self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
+                                      use_cnn=False, use_stem=False, use_attn=False,
+                                      use_mamba=True, **kwargs).to(self.device)
+            self.num_inputs = 6
         elif model_name == 'bscan_unified_fm_attnonly':
             # FM + cross-attention only
             self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,

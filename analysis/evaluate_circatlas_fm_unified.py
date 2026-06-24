@@ -46,6 +46,9 @@ FM_MODELS = {
     "bscan_unified_fm_nocnn":    dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=True),
     "bscan_unified_fm_nostem":   dict(encoder_type="rnafm", use_cnn=True,  use_stem=False, use_attn=True),
     "bscan_unified_fm_noattn":   dict(encoder_type="rnafm", use_cnn=True,  use_stem=True,  use_attn=False),
+    # head-comparison: Mamba (local/sequential) branch in place of CNN
+    "bscan_unified_fm_mambastem":dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=False, use_mamba=True),
+    "bscan_unified_fm_mambaonly":dict(encoder_type="rnafm", use_cnn=False, use_stem=False, use_attn=False, use_mamba=True),
     # Adapter variants (kept for completeness; not in the main paper)
     "bscan_unified_fm_cnnadapter":   dict(encoder_type="rnafm",    adapter_type="cnn",   adapter_layers=2),
     "bscan_unified_fm_mambaadapter": dict(encoder_type="rnafm",    adapter_type="mamba", adapter_layers=1),
