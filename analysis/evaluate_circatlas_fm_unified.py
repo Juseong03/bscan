@@ -49,6 +49,8 @@ FM_MODELS = {
     # head-comparison: Mamba (local/sequential) branch in place of CNN
     "bscan_unified_fm_mambastem":dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=False, use_mamba=True),
     "bscan_unified_fm_mambaonly":dict(encoder_type="rnafm", use_cnn=False, use_stem=False, use_attn=False, use_mamba=True),
+    "bscan_unified_fm_attnstem": dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=True),
+    "bscan_unified_fm_mlpstem":  dict(encoder_type="rnafm", use_cnn=False, use_stem=True,  use_attn=False, use_mlp=True),
     # Adapter variants (kept for completeness; not in the main paper)
     "bscan_unified_fm_cnnadapter":   dict(encoder_type="rnafm",    adapter_type="cnn",   adapter_layers=2),
     "bscan_unified_fm_mambaadapter": dict(encoder_type="rnafm",    adapter_type="mamba", adapter_layers=1),
@@ -173,9 +175,10 @@ def evaluate_model(
     device: str,
     batch_size: int,
     seeds: list[int],
+    fm_emb_base: Path = Path("external_data/circatlas/exon_controls/fm_embeddings"),
 ):
     enc_type = FM_MODELS[model_name]["encoder_type"]
-    fm_emb_dir = Path("external_data/circatlas/exon_controls/fm_embeddings") / enc_type
+    fm_emb_dir = Path(fm_emb_base) / enc_type
 
     if not fm_emb_dir.exists():
         print(f"[error] FM embedding dir not found: {fm_emb_dir}")
@@ -261,6 +264,9 @@ def main():
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
+    parser.add_argument("--fm_emb_dir", type=Path,
+                        default=Path("external_data/circatlas/exon_controls/fm_embeddings"),
+                        help="base dir of external FM embeddings (<dir>/<enc>/<key>.pt)")
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -274,7 +280,7 @@ def main():
             continue
         print(f"\n{'='*60}\n{model_name}\n{'='*60}")
         s = evaluate_model(model_name, junction, args.out_dir, args.device,
-                           args.batch_size, args.seeds)
+                           args.batch_size, args.seeds, fm_emb_base=args.fm_emb_dir)
         if s:
             summaries.append(s)
 

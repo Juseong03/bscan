@@ -127,7 +127,7 @@ def experiment(args_dict: dict)->None:
         'bscan_unified_fm_fulltr', 'bscan_unified_fm_mlponly', 'bscan_unified_fm_nocnn', 'bscan_unified_fm_nostem',
         'bscan_unified_fm_noattn', 'bscan_unified_fm_cnnonly',
         'bscan_unified_fm_stemonly', 'bscan_unified_fm_attnonly',
-        'bscan_unified_fm_mambastem', 'bscan_unified_fm_mambaonly',
+        'bscan_unified_fm_mambastem', 'bscan_unified_fm_mambaonly', 'bscan_unified_fm_attnstem', 'bscan_unified_fm_mlpstem',
     ]:
         fm_map = {
             'bscan_unified_ernie': 'rnaernie',
@@ -149,6 +149,8 @@ def experiment(args_dict: dict)->None:
             'bscan_unified_fm_attnonly': 'rnafm',
             'bscan_unified_fm_mambastem': 'rnafm',
             'bscan_unified_fm_mambaonly': 'rnafm',
+            'bscan_unified_fm_attnstem': 'rnafm',
+            'bscan_unified_fm_mlpstem': 'rnafm',
         }
         fm_name = fm_map[args_dict['model_name']]
         
@@ -416,7 +418,7 @@ if __name__ == '__main__':
                                  'bscan_unified_fm_cnnonly', 'bscan_unified_fm_stemonly',
                                  'bscan_unified_fm_attnonly',
                                  # head-comparison (Mamba branch)
-                                 'bscan_unified_fm_mambastem', 'bscan_unified_fm_mambaonly',
+                                 'bscan_unified_fm_mambastem', 'bscan_unified_fm_mambaonly', 'bscan_unified_fm_attnstem', 'bscan_unified_fm_mlpstem', 'bscan_unified_fm_attnstem', 'bscan_unified_fm_mlpstem',
                                  # AUG-RCM
                                  'bscan_unified_fm_rcm',
                                  ])

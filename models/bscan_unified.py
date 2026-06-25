@@ -97,6 +97,7 @@ class BSCANUnified(nn.Module):
         use_stem: bool = True,
         use_attn: bool = True,
         use_mamba: bool = False,   # Mamba (SSM) local/sequential branch — alternative to CNN
+        use_mlp: bool = False,     # MLP on mean-pooled FM features — no local/seq/attn bias (control)
         # Optional RCM auxiliary branch (AUG-RCM): flanking RCM k-mer match features
         use_rcm: bool = False,
         d_rcm: int = 64,
@@ -118,6 +119,7 @@ class BSCANUnified(nn.Module):
         self.use_stem = use_stem
         self.use_attn = use_attn
         self.use_mamba = use_mamba
+        self.use_mlp = use_mlp
         self.use_rcm = use_rcm
         self.adapter_type = adapter_type
         L = junction_bps
@@ -192,6 +194,11 @@ class BSCANUnified(nn.Module):
         if use_mamba:
             self.mamba_branch = _MambaAdapter(d_model, n_layers=2)
 
+        # Branch A'' : MLP on mean-pooled FM features — control with NO local/sequential
+        # /attention inductive bias (tests whether position-aware processing is what matters).
+        if use_mlp:
+            self.mlp_branch = nn.Sequential(nn.Linear(d_model, d_model), nn.ReLU(inplace=True))
+
         # 4b. Branch D (optional): RCM auxiliary MLP (AUG-RCM)
         # Fuses flanking reverse-complement-match k-mer features as a learnable branch,
         # so the model can use explicit intron-complementarity signal during training.
@@ -207,6 +214,7 @@ class BSCANUnified(nn.Module):
         if use_stem: total_d += 64 * 4 * 4 + 2 * L # Stem features + row/col max
         if use_attn: total_d += d_model # Global context
         if use_mamba: total_d += d_model * 2 # Mamba branch: pooled upper + lower
+        if use_mlp: total_d += d_model * 2 # MLP branch: pooled upper + lower
         if use_rcm: total_d += d_rcm # RCM auxiliary branch
 
         self.classifier = Classifier(d_in=total_d, d_hiddens=[256], dropout=dropout)
@@ -285,6 +293,12 @@ class BSCANUnified(nn.Module):
             mb_u = self.mamba_branch(u_feat).mean(dim=1)   # [B, d_model]
             mb_l = self.mamba_branch(l_feat).mean(dim=1)
             parts.extend([mb_u, mb_l])
+
+        # Branch A'': MLP on mean-pooled FM features (no positional/local bias — control)
+        if self.use_mlp:
+            ml_u = self.mlp_branch(u_feat.mean(dim=1))
+            ml_l = self.mlp_branch(l_feat.mean(dim=1))
+            parts.extend([ml_u, ml_l])
 
         # Branch B: Stem
         if self.use_stem:

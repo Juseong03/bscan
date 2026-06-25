@@ -1,0 +1,6 @@
+config,model_name,params_M,branches
+FM+CNN+Stem,bscan_unified_fm_noattn,1.67,CNN+Stem
+FM+Mamba+Stem,bscan_unified_fm_mambastem,0.72,Mamba+Stem
+FM+Attn+Stem,bscan_unified_fm_attnstem,0.72,Attn+Stem
+FM+MLP+Stem,bscan_unified_fm_mlpstem,0.50,MLP+Stem
+FM+CNN+Stem+Attn(Full),bscan_unified_fm_fulltr,1.97,CNN+Stem+Attn

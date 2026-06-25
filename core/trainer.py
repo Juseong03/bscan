@@ -397,6 +397,17 @@ class Trainer:
                                       use_cnn=False, use_stem=False, use_attn=False,
                                       use_mamba=True, **kwargs).to(self.device)
             self.num_inputs = 6
+        elif model_name == 'bscan_unified_fm_attnstem':
+            # FM + Attention + Stem (global-attention head control, no CNN/Mamba)
+            self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
+                                      use_cnn=False, use_stem=True, use_attn=True, **kwargs).to(self.device)
+            self.num_inputs = 6
+        elif model_name == 'bscan_unified_fm_mlpstem':
+            # FM + MLP(mean-pool) + Stem — no local/seq/attn inductive bias (control)
+            self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
+                                      use_cnn=False, use_stem=True, use_attn=False,
+                                      use_mlp=True, **kwargs).to(self.device)
+            self.num_inputs = 6
         elif model_name == 'bscan_unified_fm_attnonly':
             # FM + cross-attention only
             self.model = BSCANUnified(encoder_type='rnafm', use_cached=True,
